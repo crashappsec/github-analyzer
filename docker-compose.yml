@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  auditor:
+    # image allows to cache all deps hence to speed up CI
+    # CI image: ghcr.io/crashappsec/github-security-auditor:latest
+    build: . # CI
+    container_name: github-security-auditor
+    working_dir: $PWD
+    volumes:
+      - $PWD:$PWD
+    environment:
+      GIT_TOKEN: ${GIT_TOKEN:-}
