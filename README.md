@@ -13,7 +13,7 @@ the file `githubsecurity.json`.
 
 ### Permissions Needed for Token
 In order to run all of the scans the token must have the following permissions.
-![Github token permissions](github_token_permissions.png)
+![Github token permissions](img/github_token_permissions.png)
 
 ### Full Usage
 ```
@@ -66,3 +66,7 @@ Flags:
  ]
 }
 ```
+
+# Credits
+
+Project was originally ported from Mike de Libero's [auditor](https://github.com/CodeReconCo/githubsecurityauditor) with the author's permission.
