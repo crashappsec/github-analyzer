@@ -1,31 +1,10 @@
-/*
-Copyright © 2020 Mike de Libero
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-*/
-package cmd
+package auditor
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/google/go-github/v32/github"
+	"github.com/google/go-github/v47/github"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -37,8 +16,8 @@ import (
 
 type ScannerResults struct {
 	TwoFactorAuthEnabled     bool
-	NumberPrivateRepos       int
-	NumberPublicRepos        int
+	TotalPrivateRepos        int
+	TotalPublicRepos         int
 	Webhooks                 []Webhook
 	ApplicationInstallations []Install
 	ActionRunners            []Runner
@@ -356,8 +335,8 @@ func (gs GithubScanner) RetrieveOrgSettings(ctx context.Context, org *string, re
 		return results
 	}
 	results.TwoFactorAuthEnabled = *orgInfo.TwoFactorRequirementEnabled
-	results.NumberPublicRepos = *orgInfo.PublicRepos
-	results.NumberPrivateRepos = *orgInfo.TotalPrivateRepos
+	results.TotalPublicRepos = *orgInfo.PublicRepos
+	results.TotalPrivateRepos = *orgInfo.TotalPrivateRepos
 	results.Webhooks = gs.RetrieveOrgWebhooks(ctx, org)
 	results.ApplicationInstallations = gs.RetrieveOrgInstalls(ctx, org)
 	results.ActionRunners = gs.RetrieveOrgActionRunners(ctx, org)

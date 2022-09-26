@@ -1,3 +1,7 @@
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/crashappsec/github-security-auditor/blob/main/LICENSE)
+<!-- [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ossf/scorecard/badge)](https://api.securityscorecards.dev/projects/github.com/crashappsec/github-security-auditor) -->
+<!-- [![Go Report Card](https://goreportcard.com/badge/github.com/ossf/scorecard/v4)](https://goreportcard.com/report/github.com/crashappsec/github-security-auditor) -->
+
 # Github Security Auditor
 Audits a Github organization for potential security problems.
 
@@ -6,14 +10,19 @@ Set a github token to an environment variable, by default the program
 looks for the environment variable name `GIT_TOKEN` but a different
 environment name can be set through the command line argument `--tokenName`.
 
-Then to run just execute the following command. By default the output goes to 
-the file `githubsecurity.json`.
+By default the output goes to the file `githubsecurity.json`.
 
-`go run . --organization <ORGANIZATION_NAME>` 
+### Running locally
+* From the root of the directory run `make`
+* Run `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN` 
+
+### Running using Docker
+
+* Run `docker compose run auditor --organization crahsappsec`
 
 ### Permissions Needed for Token
 In order to run all of the scans the token must have the following permissions.
-![Github token permissions](github_token_permissions.png)
+![Github token permissions](img/github_token_permissions.png)
 
 ### Full Usage
 ```
@@ -66,3 +75,7 @@ Flags:
  ]
 }
 ```
+
+# Credits
+
+Project was originally ported from Mike de Libero's [auditor](https://github.com/CodeReconCo/githubsecurityauditor) with the author's permission.
