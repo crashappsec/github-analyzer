@@ -14,4 +14,4 @@ type ViperEnvVars struct {
 	TokenName    string `mapstructure:"TOKEN_NAME"`
 }
 
-var ViperEnv = ViperEnvVars{}
+var ViperEnv ViperEnvVars
