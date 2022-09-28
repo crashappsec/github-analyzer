@@ -16,6 +16,10 @@ tidy:
 fmt:
 	gofmt -w ./$*
 
+.PHONY: vet
+vet:
+	go vet ./...
+
 .PHONY: help
 help:
 	@echo "Makefile targets"

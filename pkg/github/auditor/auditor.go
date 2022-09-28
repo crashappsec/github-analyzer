@@ -2,12 +2,15 @@ package auditor
 
 import (
 	"context"
+	"time"
 
 	"github.com/crashappsec/github-security-auditor/pkg/config"
 	"github.com/crashappsec/github-security-auditor/pkg/github/org"
 	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
+	"github.com/crashappsec/github-security-auditor/pkg/github/types"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/v47/github"
+	"github.com/jpillora/backoff"
 	"golang.org/x/oauth2"
 )
 
@@ -17,9 +20,9 @@ type GithubAuditor struct {
 
 // FIXME remove this and return a AuditSummary defined in the issue pkg
 type LegacyOrgSummary struct {
-	Webhooks      []repo.Webhook
-	Installs      []org.Install
-	ActionRunners []org.Runner
+	Webhooks      []types.Webhook
+	Installs      []types.Install
+	ActionRunners []types.Runner
 	Repositories  []repo.Repository
 	Stats         []interface{}
 }
@@ -52,7 +55,12 @@ func (gs GithubAuditor) AuditOrg(name string) (*LegacyOrgSummary, error) {
 	// FIXME refactor, pass a common context and backoff, and possibly cancel handlers
 	// in case of multiple failing operations
 	ctx := context.Background()
-	org, err := org.NewOrganization(ctx, gs.client, name)
+	back := &backoff.Backoff{
+		Min:    10 * time.Second,
+		Max:    1 * time.Hour,
+		Jitter: true,
+	}
+	org, err := org.NewOrganization(ctx, gs.client, back, name)
 	if err != nil {
 		log.Logger.Error(err)
 		return nil, err
