@@ -5,12 +5,14 @@ import (
 	"os"
 	"strings"
 
+	"encoding/json"
 	"github.com/crashappsec/github-security-auditor/pkg/config"
 	"github.com/crashappsec/github-security-auditor/pkg/github/auditor"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"io/ioutil"
 )
 
 func main() {
@@ -35,12 +37,27 @@ func NewRootCommand() *cobra.Command {
 			return initializeConfig(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			auditor, err := auditor.NewGithubAuditor()
+			token := os.Getenv(config.ViperEnv.TokenName)
+			if token == "" {
+				log.Logger.Errorf("Github token not set")
+				return
+			}
+
+			auditor, err := auditor.NewGithubAuditor(token)
 			if err != nil {
 				log.Logger.Error(err)
 				return
 			}
-			auditor.Audit()
+			// FIXME change the command line flags to allow auditing an org / repo etc
+			results, err := auditor.AuditOrg(config.ViperEnv.Organization)
+			if err != nil {
+				log.Logger.Error(err)
+			}
+
+			// FIXME clean up all the functionality below and make it dependent on cmd line arguments
+			output, _ := json.MarshalIndent(results, "", " ")
+			log.Logger.Infof("%s", output)
+			_ = ioutil.WriteFile(config.ViperEnv.OutputFile, output, 0644)
 		},
 	}
 	rootCmd.Flags().StringVarP(&config.ViperEnv.CfgFile, "config", "", "", "config file (default is $HOME/.github-security-auditor.yaml)")

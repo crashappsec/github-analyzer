@@ -1,5 +1,6 @@
 package issue
 
+// TODO define issues / statistics in a uniform way
 type Severity int
 
 const (
@@ -25,11 +26,6 @@ type Issue struct {
 	Category    Category
 	Description string
 	Remediation string
-	// TODO use weight when assigning scores cumulatively
+	// TODO use weight when assigning scores for healthcheck of a repo / org
 	Weight int
-}
-
-type AuditSummary struct {
-	Issues []Issue
-	Stats  interface{}
 }
