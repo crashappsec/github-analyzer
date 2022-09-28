@@ -7,9 +7,9 @@ import (
 	"os"
 )
 
-var Logger *zap.SugaredLogger
+var Logger *zap.SugaredLogger = initLogger()
 
-func init() {
+func initLogger() *zap.SugaredLogger {
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder
 
@@ -30,5 +30,5 @@ func init() {
 		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
 	)
 
-	Logger = zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)).Sugar()
+	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)).Sugar()
 }
