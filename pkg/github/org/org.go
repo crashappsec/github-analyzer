@@ -3,11 +3,15 @@ package org
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"
 	"github.com/crashappsec/github-security-auditor/pkg/github/utils"
+	"github.com/crashappsec/github-security-auditor/pkg/issue"
+	"github.com/crashappsec/github-security-auditor/pkg/issue/category"
+	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
@@ -133,4 +137,40 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 	}
 
 	return repos, nil
+}
+
+func (org Organization) Audit2FA(
+	ctx context.Context) ([]issue.Issue, error) {
+
+	var issues []issue.Issue
+
+	log.Logger.Debug("Checking if 2FA is required at org-level")
+	if *org.CoreStats.TwoFactorRequirementEnabled {
+		return issues, nil
+	}
+
+	missing2FA := issue.Issue{
+		ID:          "org_2fa_disabled",
+		Severity:    severity.Medium,
+		Category:    category.Permissions,
+		Description: fmt.Sprintf("Two-factor authentication requirement in organization '%s' is disabled", *org.info.Login),
+		// FIXME we could be doing markdown / html / etc. both these and descriptions could ge tlong so we need something better
+		Remediation: "Please see https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization",
+	}
+
+	issues = append(issues, missing2FA)
+	return issues, nil
+}
+
+func (org Organization) Audit(
+	ctx context.Context) ([]issue.Issue, error) {
+
+	var allIssues []issue.Issue
+	twoFactor, err := org.Audit2FA(ctx)
+	if err != nil {
+		log.Logger.Error(err)
+	}
+
+	allIssues = append(allIssues, twoFactor...)
+	return allIssues, nil
 }

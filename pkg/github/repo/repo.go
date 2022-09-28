@@ -3,7 +3,6 @@ package repo
 import (
 	"context"
 	"encoding/json"
-	"time"
 
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"
 	"github.com/crashappsec/github-security-auditor/pkg/github/utils"

@@ -1,31 +1,16 @@
 package issue
 
-// TODO define issues / statistics in a uniform way
-type Severity int
-
-const (
-	Hygiene Severity = iota
-	Low
-	Medium
-	High
-	Critical
-)
-
-type Category string
-
-const (
-	Code        Category = "code"
-	Permissions          = "permissions"
-	CICD                 = "cicd"
-	Actions              = "actions"
-	Workflows            = "workflows"
+import (
+	"github.com/crashappsec/github-security-auditor/pkg/issue/category"
+	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
+	"github.com/crashappsec/github-security-auditor/pkg/issue/tags"
 )
 
 type Issue struct {
-	Severity    Severity
-	Category    Category
-	Description string
-	Remediation string
-	// TODO use weight when assigning scores for healthcheck of a repo / org
-	Weight int
+	ID          string            `json:"id"`
+	Severity    severity.Severity `json:"severity"`
+	Category    category.Category `json:"category"`
+	Tags        []tags.Tag        `json:"tags,omitempty"`
+	Description string            `json:"description"`
+	Remediation string            `json:"remediation"`
 }

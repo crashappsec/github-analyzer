@@ -1,13 +1,28 @@
 version: "3.8"
 
 services:
-  auditor:
-    # image allows to cache all deps hence to speed up CI
-    # CI image: ghcr.io/crashappsec/github-security-auditor:latest
-    build: . # CI
-    container_name: github-security-auditor
-    working_dir: $PWD
+auditor:
+# image allows to cache all deps hence to speed up CI
+# CI image: ghcr.io/crashappsec/github-security-auditor:latest
+build: . # CI
+container_name: github-security-auditor
+working_dir: $PWD
+volumes:
+- $PWD:$PWD
+environment:
+GIT_TOKEN: ${GIT_TOKEN:-}
+  
+  pre-commit:
+    # CI image: ghcr.io/crashappsec/integrations-precommit:${PRECOMMIT_TAG:-latest}
+    build: # CI
+      dockerfile: Dockerfile.precommit # CI
+      context: . # CI
+    environment:
+      SKIP: ${SKIP:-}
+    # init is necessary if you cancel lint locally
+    # kill signal would not be propagated to pre-commit
+    # hence container would not exit
+    init: true
     volumes:
       - $PWD:$PWD
-    environment:
-      GIT_TOKEN: ${GIT_TOKEN:-}
+    working_dir: $PWD
