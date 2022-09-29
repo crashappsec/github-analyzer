@@ -50,11 +50,14 @@ func WebhooksAggregator(hooks []*github.Hook) []types.Webhook {
 	var webhooks []types.Webhook
 	for _, hook := range hooks {
 		wh := types.Webhook{
-			URL:    hook.URL,
-			ID:     hook.ID,
-			Type:   hook.Type,
-			Name:   hook.Name,
-			Active: hook.Active,
+			URL:     hook.URL,
+			ID:      hook.ID,
+			Type:    hook.Type,
+			Name:    hook.Name,
+			TestURL: hook.TestURL,
+			PingURL: hook.PingURL,
+			Config:  hook.Config,
+			Active:  hook.Active,
 		}
 		webhooks = append(webhooks, wh)
 	}

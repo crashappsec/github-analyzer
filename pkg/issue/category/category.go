@@ -3,9 +3,8 @@ package category
 type Category string
 
 const (
-	Code        Category = "code"
-	Permissions          = "permissions"
-	CICD                 = "cicd"
-	Actions              = "actions"
-	Workflows            = "workflows"
+	Code                  Category = "Code"
+	Authentication                 = "Authentication"
+	Authorization                  = "Authorization"
+	InformationDisclosure          = "Information disclosure to untrusted parties"
 )

@@ -12,6 +12,7 @@ import (
 	"github.com/crashappsec/github-security-auditor/pkg/github/utils"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/issue/category"
+	"github.com/crashappsec/github-security-auditor/pkg/issue/resource"
 	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/v47/github"
@@ -27,6 +28,7 @@ type Organization struct {
 	Users         []types.User
 	Collaborators []types.User
 	Repositories  []repo.Repository
+	Webhooks      []types.Webhook
 }
 
 // TODO: check public gists
@@ -60,15 +62,23 @@ func NewOrganization(
 	return &org, nil
 }
 
+// GetWebhook returns the webhooks for a given org. Upon first call,
+// it lazily updates the Organization with the webhook information
 func (org Organization) GetWebhooks(
 	ctx context.Context) ([]types.Webhook, error) {
-	return utils.GetOrgPaginatedResult(
+	if len(org.Webhooks) > 0 {
+		return org.Webhooks, nil
+	}
+
+	hooks, err := utils.GetOrgPaginatedResult(
 		ctx,
 		org.backoff,
 		*org.info.Login,
 		ctx, &github.ListOptions{PerPage: 100},
 		org.client.Organizations.ListHooks,
 		utils.WebhooksAggregator)
+	org.Webhooks = hooks
+	return hooks, err
 }
 
 func (org Organization) GetInstalls(ctx context.Context) ([]types.Install, error) {
@@ -284,11 +294,18 @@ func (org Organization) Audit2FA(
 	log.Logger.Debug("Checking if 2FA is required at org-level")
 	if !*org.CoreStats.TwoFactorRequirementEnabled {
 		missing2FA := issue.Issue{
+			// FIXME we need a central definition of all of those
 			ID:          "2FA-0",
 			Name:        "Organization 2FA disabled",
 			Severity:    severity.Medium,
-			Category:    category.Permissions,
+			Category:    category.Authentication,
 			Description: fmt.Sprintf("Two-factor authentication requirement in organization '%s' is disabled", *org.info.Login),
+			Resources: []resource.Resource{
+				{
+					ID:   *org.info.Login,
+					Kind: resource.Organization,
+				},
+			},
 			// FIXME we could be doing markdown / html / etc. both these and descriptions could ge tlong so we need something better
 			Remediation: "Please see https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization for steps on how to configure 2FA for your organization",
 		}
@@ -296,10 +313,12 @@ func (org Organization) Audit2FA(
 		issues = append(issues, missing2FA)
 
 		usersLacking2FA := []string{}
+		resources := []resource.Resource{}
 		users, _ := org.GetUsers(ctx)
 		for _, user := range users {
 			if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
 				usersLacking2FA = append(usersLacking2FA, *user.Login)
+				resources = append(resources, resource.Resource{ID: *user.Login, Kind: resource.UserAccount})
 			}
 		}
 
@@ -308,8 +327,10 @@ func (org Organization) Audit2FA(
 				ID:          "2FA-1",
 				Name:        "Users without 2FA configured",
 				Severity:    severity.Low,
-				Category:    category.Permissions,
+				Category:    category.Authentication,
+				CWEs:        []int{308},
 				Description: fmt.Sprintf("The following users have not enabled 2FA: %s", strings.Join(usersLacking2FA, ", ")),
+				Resources:   resources,
 				Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
 			}
 			issues = append(issues, usersMissing2FA)
@@ -318,9 +339,11 @@ func (org Organization) Audit2FA(
 
 	collaboratorsLacking2FA := []string{}
 	collaborators, _ := org.GetCollaborators(ctx)
+	resources := []resource.Resource{}
 	for _, user := range collaborators {
 		if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
 			collaboratorsLacking2FA = append(collaboratorsLacking2FA, *user.Login)
+			resources = append(resources, resource.Resource{ID: *user.Login, Kind: resource.UserAccount})
 		}
 	}
 
@@ -329,7 +352,9 @@ func (org Organization) Audit2FA(
 			ID:          "2FA-2",
 			Name:        "Collaborators without 2FA configured",
 			Severity:    severity.Low,
-			Category:    category.Permissions,
+			Category:    category.Authentication,
+			Resources:   resources,
+			CWEs:        []int{308},
 			Description: fmt.Sprintf("The following collaborators have not enabled 2FA: %s", strings.Join(collaboratorsLacking2FA, ", ")),
 			Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
 		}
@@ -338,15 +363,49 @@ func (org Organization) Audit2FA(
 	return issues, nil
 }
 
+func (org Organization) AuditWebhooks(
+	ctx context.Context) ([]issue.Issue, error) {
+	var issues []issue.Issue
+
+	hooks, _ := org.GetWebhooks(ctx)
+	for _, hook := range hooks {
+		if !*hook.Active {
+			continue
+		}
+		url, ok := hook.Config["url"]
+		if !ok {
+			continue
+		}
+		if !strings.HasPrefix(url.(string), "https") {
+			issues = append(issues, issue.Issue{
+				ID:          "WH-0",
+				Name:        "Insecure webhook payload URL",
+				Severity:    severity.High,
+				Category:    category.InformationDisclosure,
+				CWEs:        []int{319},
+				Description: fmt.Sprintf("Non-HTTPS webhook detected: %s", url.(string)),
+				Resources:   []resource.Resource{{ID: url.(string), Kind: resource.Webhook}},
+				Remediation: "It is recommended to use HTTPS webhooks if data involved is sensitive and also enable SSL verification as outlined in https://docs.github.com/en/developers/webhooks-and-events/webhooks/creating-webhooks",
+			})
+		}
+	}
+	return issues, nil
+}
+
 func (org Organization) Audit(
 	ctx context.Context) ([]issue.Issue, error) {
-
 	var allIssues []issue.Issue
-	twoFactor, err := org.Audit2FA(ctx)
-	if err != nil {
-		log.Logger.Error(err)
+	auditHooks := [](func(context.Context) ([]issue.Issue, error)){
+		org.AuditWebhooks, org.Audit2FA,
 	}
 
-	allIssues = append(allIssues, twoFactor...)
+	for _, hook := range auditHooks {
+		hookIssues, err := hook(ctx)
+		if err != nil {
+			log.Logger.Error(err)
+		}
+		allIssues = append(allIssues, hookIssues...)
+	}
+
 	return allIssues, nil
 }

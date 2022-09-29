@@ -66,11 +66,14 @@ type OrgCoreStats struct {
 }
 
 type Webhook struct {
-	URL    *string `json:"url,omitempty"`
-	ID     *int64  `json:"id,omitempty"`
-	Type   *string `json:"type,omitempty"`
-	Name   *string `json:"name,omitempty"`
-	Active *bool   `json:"active,omitempty"`
+	URL     *string                `json:"url,omitempty"`
+	ID      *int64                 `json:"id,omitempty"`
+	Type    *string                `json:"type,omitempty"`
+	Name    *string                `json:"name,omitempty"`
+	TestURL *string                `json:"test_url,omitempty"`
+	PingURL *string                `json:"ping_url,omitempty"`
+	Config  map[string]interface{} `json:"config,omitempty"`
+	Active  *bool                  `json:"active,omitempty"`
 }
 
 type Workflow struct {
