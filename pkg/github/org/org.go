@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
@@ -22,9 +23,13 @@ type Organization struct {
 	client  *github.Client
 	backoff *backoff.Backoff
 
-	CoreStats *types.OrgCoreStats
+	CoreStats     *types.OrgCoreStats
+	Users         []types.User
+	Collaborators []types.User
+	Repositories  []repo.Repository
 }
 
+// TODO: check public gists
 func NewOrganization(
 	ctx context.Context,
 	client *github.Client,
@@ -87,10 +92,141 @@ func (org *Organization) GetActionRunners(ctx context.Context) ([]types.Runner, 
 		utils.RunnersAggregator)
 }
 
-// FIXME due to some restrictions in generics as of 1.18 we cannot use the generic
-// paginatedResult here
+// GetUsers returns the users for a given org. Upon first call,
+// it lazily updates the Organization with the user information
+func (org *Organization) GetUsers(ctx context.Context) (
+	[]types.User, error) {
+
+	if len(org.Users) > 0 {
+		return org.Users, nil
+	}
+
+	log.Logger.Debugf("Fetching users for %s\n", *org.info.Login)
+	var users []types.User
+	// XXX there exists a filter option for fetching only thouse with 2fa_disabled
+	// but for users let's fetch all information
+	opt := &github.ListMembersOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	for {
+		orgMembers, resp, err := org.client.Organizations.ListMembers(ctx, *org.info.Login, opt)
+
+		if _, ok := err.(*github.RateLimitError); ok {
+			d := org.backoff.Duration()
+			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
+			time.Sleep(d)
+			continue
+		}
+
+		if err != nil {
+			if resp.StatusCode == 403 {
+				log.Logger.Infoln("It appears the token being used doesn't have access to this information")
+			} else {
+				log.Logger.Error(err)
+			}
+			return users, err
+		}
+
+		org.backoff.Reset()
+		for _, m := range orgMembers {
+			// FIXME this seems to return more information although in principle it should be the same
+			// as in members - is there any param we could be missing?
+			u, _, err := org.client.Users.Get(ctx, *m.Login)
+			if err != nil {
+				log.Logger.Error(err)
+				continue
+			}
+			user := types.User{}
+			// FIXME use reflection
+			userJson, _ := json.Marshal(u)
+			_ = json.Unmarshal(userJson, &user)
+			users = append(users, user)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.Page = resp.NextPage
+	}
+
+	org.Users = users
+	return users, nil
+}
+
+// GetUsers returns the users for a given org. Upon first call,
+// it lazily updates the Organization with the user information
+func (org *Organization) GetCollaborators(ctx context.Context) (
+	[]types.User, error) {
+
+	if len(org.Collaborators) > 0 {
+		return org.Collaborators, nil
+	}
+
+	log.Logger.Debugf("Fetching collaborators for %s\n", *org.info.Login)
+	var users []types.User
+	// XXX there exists a filter option for fetching only thouse with 2fa_disabled
+	// but for users let's fetch all information
+	opt := &github.ListOutsideCollaboratorsOptions{
+		ListOptions: github.ListOptions{PerPage: 100},
+	}
+
+	for {
+		orgMembers, resp, err := org.client.Organizations.ListOutsideCollaborators(ctx, *org.info.Login, opt)
+
+		if _, ok := err.(*github.RateLimitError); ok {
+			d := org.backoff.Duration()
+			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
+			time.Sleep(d)
+			continue
+		}
+
+		if err != nil {
+			if resp.StatusCode == 403 {
+				log.Logger.Infoln("It appears the token being used doesn't have access to this information")
+			} else {
+				log.Logger.Error(err)
+			}
+			return users, err
+		}
+
+		org.backoff.Reset()
+		for _, m := range orgMembers {
+			// FIXME this seems to return more information although in principle it should be the same
+			// as in members - is there any param we could be missing?
+			u, _, err := org.client.Users.Get(ctx, *m.Login)
+			if err != nil {
+				log.Logger.Error(err)
+				continue
+			}
+			user := types.User{}
+			// FIXME use reflection
+			userJson, _ := json.Marshal(u)
+			_ = json.Unmarshal(userJson, &user)
+			users = append(users, user)
+		}
+
+		if resp.NextPage == 0 {
+			break
+		}
+
+		opt.Page = resp.NextPage
+	}
+
+	org.Collaborators = users
+	return users, nil
+}
+
+// GetRepositories returns the repositories for a given org. Upon first call,
+// it lazily updates the Organization with the repository information
 func (org *Organization) GetRepositories(ctx context.Context) (
 	[]repo.Repository, error) {
+
+	if len(org.Repositories) > 0 {
+		return org.Repositories, nil
+	}
+
 	log.Logger.Debugf("Fetching repositories for %s\n", *org.info.Login)
 	var repos []repo.Repository
 	opt := &github.RepositoryListByOrgOptions{
@@ -136,6 +272,7 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 		opt.Page = resp.NextPage
 	}
 
+	org.Repositories = repos
 	return repos, nil
 }
 
@@ -145,20 +282,59 @@ func (org Organization) Audit2FA(
 	var issues []issue.Issue
 
 	log.Logger.Debug("Checking if 2FA is required at org-level")
-	if *org.CoreStats.TwoFactorRequirementEnabled {
-		return issues, nil
+	if !*org.CoreStats.TwoFactorRequirementEnabled {
+		missing2FA := issue.Issue{
+			ID:          "2FA-0",
+			Name:        "Organization 2FA disabled",
+			Severity:    severity.Medium,
+			Category:    category.Permissions,
+			Description: fmt.Sprintf("Two-factor authentication requirement in organization '%s' is disabled", *org.info.Login),
+			// FIXME we could be doing markdown / html / etc. both these and descriptions could ge tlong so we need something better
+			Remediation: "Please see https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization for steps on how to configure 2FA for your organization",
+		}
+
+		issues = append(issues, missing2FA)
+
+		usersLacking2FA := []string{}
+		users, _ := org.GetUsers(ctx)
+		for _, user := range users {
+			if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
+				usersLacking2FA = append(usersLacking2FA, *user.Login)
+			}
+		}
+
+		if len(usersLacking2FA) > 0 {
+			usersMissing2FA := issue.Issue{
+				ID:          "2FA-1",
+				Name:        "Users without 2FA configured",
+				Severity:    severity.Low,
+				Category:    category.Permissions,
+				Description: fmt.Sprintf("The following users have not enabled 2FA: %s", strings.Join(usersLacking2FA, ", ")),
+				Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
+			}
+			issues = append(issues, usersMissing2FA)
+		}
 	}
 
-	missing2FA := issue.Issue{
-		ID:          "org_2fa_disabled",
-		Severity:    severity.Medium,
-		Category:    category.Permissions,
-		Description: fmt.Sprintf("Two-factor authentication requirement in organization '%s' is disabled", *org.info.Login),
-		// FIXME we could be doing markdown / html / etc. both these and descriptions could ge tlong so we need something better
-		Remediation: "Please see https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization",
+	collaboratorsLacking2FA := []string{}
+	collaborators, _ := org.GetCollaborators(ctx)
+	for _, user := range collaborators {
+		if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
+			collaboratorsLacking2FA = append(collaboratorsLacking2FA, *user.Login)
+		}
 	}
 
-	issues = append(issues, missing2FA)
+	if len(collaboratorsLacking2FA) > 0 {
+		collaboratorsMissing2FA := issue.Issue{
+			ID:          "2FA-2",
+			Name:        "Collaborators without 2FA configured",
+			Severity:    severity.Low,
+			Category:    category.Permissions,
+			Description: fmt.Sprintf("The following collaborators have not enabled 2FA: %s", strings.Join(collaboratorsLacking2FA, ", ")),
+			Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
+		}
+		issues = append(issues, collaboratorsMissing2FA)
+	}
 	return issues, nil
 }
 
