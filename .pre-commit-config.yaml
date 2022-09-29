@@ -23,6 +23,7 @@ repos:
     rev: v0.11.0
     hooks:
       - id: golines
+        args: [--max-len=80]
 
   - repo: https://github.com/syntaqx/git-hooks
     rev: v0.0.17

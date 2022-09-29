@@ -3,7 +3,8 @@ package severity
 type Severity int
 
 const (
-	Hygiene Severity = iota
+	Informational Severity = iota
+	Hygiene
 	Low
 	Medium
 	High

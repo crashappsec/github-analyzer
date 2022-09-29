@@ -3,11 +3,12 @@ package utils
 import (
 	"context"
 
+	"time"
+
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
-	"time"
 )
 
 func RunnersAggregator(runners *github.Runners) []types.Runner {
@@ -24,7 +25,9 @@ func RunnersAggregator(runners *github.Runners) []types.Runner {
 	return orgRunners
 }
 
-func InstallsAggregator(installs *github.OrganizationInstallations) []types.Install {
+func InstallsAggregator(
+	installs *github.OrganizationInstallations,
+) []types.Install {
 	var orgInstalls []types.Install
 
 	for _, install := range installs.Installations {

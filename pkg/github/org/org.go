@@ -83,7 +83,9 @@ func (org Organization) GetWebhooks(
 	return hooks, err
 }
 
-func (org Organization) GetInstalls(ctx context.Context) ([]types.Install, error) {
+func (org Organization) GetInstalls(
+	ctx context.Context,
+) ([]types.Install, error) {
 	return utils.GetOrgPaginatedResult(
 		ctx,
 		org.backoff,
@@ -93,7 +95,9 @@ func (org Organization) GetInstalls(ctx context.Context) ([]types.Install, error
 		utils.InstallsAggregator)
 }
 
-func (org *Organization) GetActionRunners(ctx context.Context) ([]types.Runner, error) {
+func (org *Organization) GetActionRunners(
+	ctx context.Context,
+) ([]types.Runner, error) {
 	return utils.GetOrgPaginatedResult(
 		ctx,
 		org.backoff,
@@ -122,7 +126,11 @@ func (org *Organization) GetUsers(ctx context.Context) (
 	}
 
 	for {
-		orgMembers, resp, err := org.client.Organizations.ListMembers(ctx, *org.info.Login, opt)
+		orgMembers, resp, err := org.client.Organizations.ListMembers(
+			ctx,
+			*org.info.Login,
+			opt,
+		)
 
 		if _, ok := err.(*github.RateLimitError); ok {
 			d := org.backoff.Duration()
@@ -254,7 +262,11 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 	}
 
 	for {
-		ghRepositories, resp, err := org.client.Repositories.ListByOrg(ctx, *org.info.Login, opt)
+		ghRepositories, resp, err := org.client.Repositories.ListByOrg(
+			ctx,
+			*org.info.Login,
+			opt,
+		)
 
 		if _, ok := err.(*github.RateLimitError); ok {
 			d := org.backoff.Duration()
@@ -276,7 +288,12 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 
 		org.backoff.Reset()
 		for _, ghRepository := range ghRepositories {
-			r, err := repo.NewRepository(ctx, org.client, org.backoff, ghRepository)
+			r, err := repo.NewRepository(
+				ctx,
+				org.client,
+				org.backoff,
+				ghRepository,
+			)
 			if err != nil {
 				log.Logger.Error(err)
 				continue
@@ -331,11 +348,15 @@ func (org Organization) Audit2FA(
 		resources := []resource.Resource{}
 		users, _ := org.GetUsers(ctx)
 		for _, user := range users {
-			if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
+			if user.TwoFactorAuthentication == nil ||
+				!*user.TwoFactorAuthentication {
 				usersLacking2FA = append(usersLacking2FA, *user.Login)
 				resources = append(
 					resources,
-					resource.Resource{ID: *user.Login, Kind: resource.UserAccount},
+					resource.Resource{
+						ID:   *user.Login,
+						Kind: resource.UserAccount,
+					},
 				)
 			}
 		}
@@ -362,8 +383,12 @@ func (org Organization) Audit2FA(
 	collaborators, _ := org.GetCollaborators(ctx)
 	resources := []resource.Resource{}
 	for _, user := range collaborators {
-		if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
-			collaboratorsLacking2FA = append(collaboratorsLacking2FA, *user.Login)
+		if user.TwoFactorAuthentication == nil ||
+			!*user.TwoFactorAuthentication {
+			collaboratorsLacking2FA = append(
+				collaboratorsLacking2FA,
+				*user.Login,
+			)
 			resources = append(
 				resources,
 				resource.Resource{ID: *user.Login, Kind: resource.UserAccount},
@@ -405,13 +430,18 @@ func (org Organization) AuditWebhooks(
 		}
 		if !strings.HasPrefix(url.(string), "https") {
 			issues = append(issues, issue.Issue{
-				ID:          "WH-0",
-				Name:        "Insecure webhook payload URL",
-				Severity:    severity.High,
-				Category:    category.InformationDisclosure,
-				CWEs:        []int{319},
-				Description: fmt.Sprintf("Non-HTTPS webhook detected: %s", url.(string)),
-				Resources:   []resource.Resource{{ID: url.(string), Kind: resource.Webhook}},
+				ID:       "WH-0",
+				Name:     "Insecure webhook payload URL",
+				Severity: severity.High,
+				Category: category.InformationDisclosure,
+				CWEs:     []int{319},
+				Description: fmt.Sprintf(
+					"Non-HTTPS webhook detected: %s",
+					url.(string),
+				),
+				Resources: []resource.Resource{
+					{ID: url.(string), Kind: resource.Webhook},
+				},
 				Remediation: "It is recommended to use HTTPS webhooks if data involved is sensitive and also enable SSL verification as outlined in https://docs.github.com/en/developers/webhooks-and-events/webhooks/creating-webhooks",
 			})
 		}
