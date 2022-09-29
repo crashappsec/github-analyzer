@@ -62,6 +62,8 @@ func NewOrganization(
 	return &org, nil
 }
 
+// GetWebhook returns the webhooks for a given org. Upon first call,
+// it lazily updates the Organization with the webhook information
 func (org Organization) GetWebhooks(
 	ctx context.Context) ([]types.Webhook, error) {
 	if len(org.Webhooks) > 0 {
@@ -374,7 +376,7 @@ func (org Organization) AuditWebhooks(
 		if !ok {
 			continue
 		}
-		if strings.HasPrefix(url.(string), "http") {
+		if !strings.HasPrefix(url.(string), "https") {
 			issues = append(issues, issue.Issue{
 				ID:          "WH-0",
 				Name:        "Insecure webhook payload URL",
