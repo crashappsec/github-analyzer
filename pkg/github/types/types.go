@@ -1,6 +1,9 @@
+// Package types exposes subsets of the core github types and attributes that we use for our analysis
 package types
 
-import "github.com/google/go-github/v47/github"
+import (
+	"github.com/google/go-github/v47/github"
+)
 
 type Runner struct {
 	ID     *int64  `json:"id,omitempty"`
@@ -94,11 +97,8 @@ type RepoCoreStats struct {
 	ForksCount                *int                        `json:"forks_count,omitempty"`
 	NetworkCount              *int                        `json:"network_count,omitempty"`
 	OpenIssuesCount           *int                        `json:"open_issues_count,omitempty"`
-	OpenIssues                *int                        `json:"open_issues,omitempty"` // Deprecated: Replaced by OpenIssuesCount. For backward compatibility OpenIssues is still populated.
 	StargazersCount           *int                        `json:"stargazers_count,omitempty"`
 	SubscribersCount          *int                        `json:"subscribers_count,omitempty"`
-	WatchersCount             *int                        `json:"watchers_count,omitempty"` // Deprecated: Replaced by StargazersCount. For backward compatibility WatchersCount is still populated.
-	Watchers                  *int                        `json:"watchers,omitempty"`       // Deprecated: Replaced by StargazersCount. For backward compatibility Watchers is still populated.
 	Size                      *int                        `json:"size,omitempty"`
 	Permissions               map[string]bool             `json:"permissions,omitempty"`
 	AllowRebaseMerge          *bool                       `json:"allow_rebase_merge,omitempty"`
@@ -109,11 +109,6 @@ type RepoCoreStats struct {
 	AllowForking              *bool                       `json:"allow_forking,omitempty"`
 	DeleteBranchOnMerge       *bool                       `json:"delete_branch_on_merge,omitempty"`
 	UseSquashPRTitleAsDefault *bool                       `json:"use_squash_pr_title_as_default,omitempty"`
-	SquashMergeCommitTitle    *string                     `json:"squash_merge_commit_title,omitempty"`   // Can be one of: "PR_TITLE", "COMMIT_OR_PR_TITLE"
-	SquashMergeCommitMessage  *string                     `json:"squash_merge_commit_message,omitempty"` // Can be one of: "PR_BODY", "COMMIT_MESSAGES", "BLANK"
-	MergeCommitTitle          *string                     `json:"merge_commit_title,omitempty"`          // Can be one of: "PR_TITLE", "MERGE_MESSAGE"
-	MergeCommitMessage        *string                     `json:"merge_commit_message,omitempty"`        // Can be one of: "PR_BODY", "PR_TITLE", "BLANK"
-	Topics                    []string                    `json:"topics,omitempty"`
 	Archived                  *bool                       `json:"archived,omitempty"`
 	Disabled                  *bool                       `json:"disabled,omitempty"`
 	License                   *github.License             `json:"license,omitempty"`
@@ -129,4 +124,31 @@ type RepoCoreStats struct {
 	SecurityAndAnalysis       *github.SecurityAndAnalysis `json:"security_and_analysis,omitempty"`
 	Visibility                *string                     `json:"visibility,omitempty"`
 	RoleName                  *string                     `json:"role_name,omitempty"`
+}
+
+type User struct {
+	Login                   *string `json:"login,omitempty"`
+	ID                      *int64  `json:"id,omitempty"`
+	NodeID                  *string `json:"node_id,omitempty"`
+	HTMLURL                 *string `json:"html_url,omitempty"`
+	Name                    *string `json:"name,omitempty"`
+	Company                 *string `json:"company,omitempty"`
+	Blog                    *string `json:"blog,omitempty"`
+	Location                *string `json:"location,omitempty"`
+	Email                   *string `json:"email,omitempty"`
+	Hireable                *bool   `json:"hireable,omitempty"`
+	PublicRepos             *int    `json:"public_repos,omitempty"`
+	PublicGists             *int    `json:"public_gists,omitempty"`
+	Followers               *int    `json:"followers,omitempty"`
+	Following               *int    `json:"following,omitempty"`
+	Type                    *string `json:"type,omitempty"`
+	SiteAdmin               *bool   `json:"site_admin,omitempty"`
+	TotalPrivateRepos       *int    `json:"total_private_repos,omitempty"`
+	OwnedPrivateRepos       *int    `json:"owned_private_repos,omitempty"`
+	PrivateGists            *int    `json:"private_gists,omitempty"`
+	TwoFactorAuthentication *bool   `json:"two_factor_authentication,omitempty"`
+	GistsURL                *string `json:"gists_url,omitempty"`
+	OrganizationsURL        *string `json:"organizations_url,omitempty"`
+	ReposURL                *string `json:"repos_url,omitempty"`
+	RoleName                *string `json:"role_name,omitempty"`
 }

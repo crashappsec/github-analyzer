@@ -6,8 +6,7 @@ import (
 
 	"github.com/crashappsec/github-security-auditor/pkg/config"
 	"github.com/crashappsec/github-security-auditor/pkg/github/org"
-	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
-	"github.com/crashappsec/github-security-auditor/pkg/github/types"
+	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
@@ -16,15 +15,6 @@ import (
 
 type GithubAuditor struct {
 	client *github.Client
-}
-
-// FIXME remove this and return a AuditSummary defined in the issue pkg
-type LegacyOrgSummary struct {
-	Webhooks      []types.Webhook
-	Installs      []types.Install
-	ActionRunners []types.Runner
-	Repositories  []repo.Repository
-	Stats         []interface{}
 }
 
 func NewGithubAuditor(token string) (*GithubAuditor, error) {
@@ -51,9 +41,7 @@ func NewGithubAuditor(token string) (*GithubAuditor, error) {
 	return &GithubAuditor{client: github.NewClient(tc)}, nil
 }
 
-func (gs GithubAuditor) AuditOrg(name string) (*LegacyOrgSummary, error) {
-	// FIXME refactor, pass a common context and backoff, and possibly cancel handlers
-	// in case of multiple failing operations
+func (gs GithubAuditor) AuditOrg(name string) ([]issue.Issue, error) {
 	ctx := context.Background()
 	back := &backoff.Backoff{
 		Min:    10 * time.Second,
@@ -66,24 +54,5 @@ func (gs GithubAuditor) AuditOrg(name string) (*LegacyOrgSummary, error) {
 		return nil, err
 	}
 
-	summary := LegacyOrgSummary{}
-	// FIXME wrap errors
-	summary.ActionRunners, err = org.GetActionRunners(ctx)
-	if err != nil {
-		log.Logger.Error(err)
-	}
-	summary.Installs, err = org.GetInstalls(ctx)
-	if err != nil {
-		log.Logger.Error(err)
-	}
-	summary.Webhooks, err = org.GetWebhooks(ctx)
-	if err != nil {
-		log.Logger.Error(err)
-	}
-	summary.Repositories, err = org.GetRepositories(ctx)
-	if err != nil {
-		log.Logger.Error(err)
-	}
-	summary.Stats = []interface{}{org.CoreStats}
-	return &summary, nil
+	return org.Audit(ctx)
 }
