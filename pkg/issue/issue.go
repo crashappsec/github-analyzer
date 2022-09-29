@@ -8,6 +8,7 @@ import (
 
 type Issue struct {
 	ID          string            `json:"id"`
+	Name        string            `json:"name"`
 	Severity    severity.Severity `json:"severity"`
 	Category    category.Category `json:"category"`
 	Tags        []tags.Tag        `json:"tags,omitempty"`
