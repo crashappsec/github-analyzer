@@ -6,13 +6,16 @@ import (
 	"strings"
 
 	"encoding/json"
+	"io/ioutil"
+
 	"github.com/crashappsec/github-security-auditor/pkg/config"
 	"github.com/crashappsec/github-security-auditor/pkg/github/auditor"
+	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
+	"github.com/crashappsec/github-security-auditor/pkg/scraping"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"io/ioutil"
 )
 
 func main() {
@@ -20,6 +23,44 @@ func main() {
 		log.Logger.Errorf("Scan completed with errors", err)
 		os.Exit(1)
 	}
+}
+
+func runCmd() {
+	var issues []issue.Issue
+
+	if config.ViperEnv.EnableScraping {
+		sissues, err := scraping.AuditScraping(
+			config.ViperEnv.Username,
+			config.ViperEnv.Password,
+			config.ViperEnv.Otp,
+			config.ViperEnv.Organization)
+		if err != nil {
+			log.Logger.Error(err)
+		}
+		issues = append(issues, sissues...)
+	}
+
+	token := os.Getenv(config.ViperEnv.TokenName)
+	if token == "" {
+		log.Logger.Error(fmt.Errorf("Github token not set"))
+	} else {
+		auditor, err := auditor.NewGithubAuditor(token)
+		if err != nil {
+			log.Logger.Error(err)
+			return
+		}
+		results, err := auditor.AuditOrg(config.ViperEnv.Organization)
+		if err != nil {
+			log.Logger.Error(err)
+		}
+		issues = append(issues, results...)
+	}
+
+	output, _ := json.MarshalIndent(issues, "", " ")
+	// XXX remove this
+	log.Logger.Infof("%s", output)
+	_ = ioutil.WriteFile(config.ViperEnv.OutputFile, output, 0644)
+
 }
 
 func NewRootCommand() *cobra.Command {
@@ -37,41 +78,38 @@ func NewRootCommand() *cobra.Command {
 			return initializeConfig(cmd)
 		},
 		Run: func(cmd *cobra.Command, args []string) {
-			token := os.Getenv(config.ViperEnv.TokenName)
-			if token == "" {
-				log.Logger.Errorf("Github token not set")
-				return
-			}
-
-			auditor, err := auditor.NewGithubAuditor(token)
-			if err != nil {
-				log.Logger.Error(err)
-				return
-			}
-			// FIXME change the command line flags to allow auditing an org / repo etc
-			results, err := auditor.AuditOrg(config.ViperEnv.Organization)
-			if err != nil {
-				log.Logger.Error(err)
-			}
-
-			// FIXME clean up all the functionality below and make it dependent on cmd line arguments
-			output, _ := json.MarshalIndent(results, "", " ")
-			log.Logger.Infof("%s", output)
-			_ = ioutil.WriteFile(config.ViperEnv.OutputFile, output, 0644)
+			runCmd()
 		},
 	}
-	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.CfgFile, "config", "", "", "config file (default is $HOME/.github-security-auditor.yaml)")
+	// FIXME change the command line flags to allow auditing an org / repo etc
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.Organization, "organization", "", "", "The organization we want to check the security on")
+	rootCmd.MarkFlagRequired("organization")
+
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.OutputFile, "output", "", "githubsecurity.json", "The file that should have the output recorded to")
+		StringVarP(&config.ViperEnv.CfgFile, "config", "c", "", "config file (default is $HOME/.github-security-auditor.yaml)")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.OutputFile, "output", "o", "githubsecurity.json", "The file that should have the output recorded to")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.TokenName, "tokenName", "", "GH_SECURITY_AUDITOR_TOKEN", "The environment variable name we should retrieve the token for API authentication")
 
-	rootCmd.MarkFlagRequired("organization")
+	rootCmd.Flags().
+		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "Enable experimental checks that rely on screen scraping")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.Username, "username", "u", "", "Username (required if enableScraping is set)")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.Password, "password", "p", "", "Password (required if enableScraping is set)")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.Otp, "otp", "", "", "One Time Password (required if enableScraping is set)")
+	// rootCmd.MarkFlagsRequiredTogether(
+	// 	"enableScraping",
+	// 	"username",
+	// 	"password",
+	// 	"otp",
+	// )
+
 	return rootCmd
 }
 
@@ -98,8 +136,13 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 	cmd.Flags().VisitAll(func(f *pflag.Flag) {
 		// env variables have no dashes
 		if strings.Contains(f.Name, "-") {
-			envVarSuffix := strings.ToUpper(strings.ReplaceAll(f.Name, "-", "_"))
-			v.BindEnv(f.Name, fmt.Sprintf("%s_%s", config.ViperEnvPrefix, envVarSuffix))
+			envVarSuffix := strings.ToUpper(
+				strings.ReplaceAll(f.Name, "-", "_"),
+			)
+			v.BindEnv(
+				f.Name,
+				fmt.Sprintf("%s_%s", config.ViperEnvPrefix, envVarSuffix),
+			)
 		}
 
 		if !f.Changed && v.IsSet(f.Name) {
