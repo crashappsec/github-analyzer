@@ -6,7 +6,7 @@
 Audits a Github organization for potential security problems.
 
 ## How to run
-Set a github token to an environment variable, by default the program 
+Set a github token to an environment variable, by default the program
 looks for the environment variable name `GIT_TOKEN` but a different
 environment name can be set through the command line argument `--tokenName`.
 
@@ -14,7 +14,7 @@ By default the output goes to the file `githubsecurity.json`.
 
 ### Running locally
 * From the root of the directory run `make`
-* Run `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN` 
+* Run `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
 
 ### Running using Docker
 
