@@ -27,7 +27,10 @@ func NewGithubAuditor(token string) (*GithubAuditor, error) {
 	var client *github.Client
 	var scmURL = config.ViperEnv.ScmURL
 	if scmURL != "" {
-		log.Logger.Infof("Setting up an enteprise client for the source control management URL %s", scmURL)
+		log.Logger.Infof(
+			"Setting up an enteprise client for the source control management URL %s",
+			scmURL,
+		)
 
 		var err error
 		client, err = github.NewEnterpriseClient(scmURL, scmURL, tc)

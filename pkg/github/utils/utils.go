@@ -80,13 +80,15 @@ func WorkflowsAggregator(workflows *github.Workflows) []types.Workflow {
 }
 
 // FIXME merge the different pagination methods into one
-func GetOrgPaginatedResult[T any, K any](ctx context.Context,
+func GetOrgPaginatedResult[T any, K any](
+	ctx context.Context,
 	backoff *backoff.Backoff,
 	callInput string,
 	callCtx context.Context,
 	callOpts *github.ListOptions,
 	githubCall func(ctx context.Context, org string, opts *github.ListOptions) (K, *github.Response, error),
-	aggregator func(K) []T) ([]T, error) {
+	aggregator func(K) []T,
+) ([]T, error) {
 
 	var results []T
 	for {
@@ -101,7 +103,9 @@ func GetOrgPaginatedResult[T any, K any](ctx context.Context,
 
 		if err != nil {
 			if resp.StatusCode == 403 {
-				log.Logger.Infoln("It appears the token being used doesn't have access to this information")
+				log.Logger.Infoln(
+					"It appears the token being used doesn't have access to this information",
+				)
 			} else {
 				log.Logger.Error(err)
 			}
@@ -123,14 +127,16 @@ func GetOrgPaginatedResult[T any, K any](ctx context.Context,
 	return results, nil
 }
 
-func GetRepoPaginatedResult[T any, K any](ctx context.Context,
+func GetRepoPaginatedResult[T any, K any](
+	ctx context.Context,
 	backoff *backoff.Backoff,
 	callInput1 string,
 	callInput2 string,
 	callCtx context.Context,
 	callOpts *github.ListOptions,
 	githubCall func(ctx context.Context, org string, repo string, opts *github.ListOptions) (K, *github.Response, error),
-	aggregator func(K) []T) ([]T, error) {
+	aggregator func(K) []T,
+) ([]T, error) {
 
 	var results []T
 	for {
@@ -145,7 +151,9 @@ func GetRepoPaginatedResult[T any, K any](ctx context.Context,
 
 		if err != nil {
 			if resp.StatusCode == 403 {
-				log.Logger.Infoln("It appears the token being used doesn't have access to this information")
+				log.Logger.Infoln(
+					"It appears the token being used doesn't have access to this information",
+				)
 			} else {
 				log.Logger.Error(err)
 			}
