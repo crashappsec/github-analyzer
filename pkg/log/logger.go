@@ -17,7 +17,11 @@ func initLogger() *zap.SugaredLogger {
 	stdoutEncoder := zapcore.NewConsoleEncoder(config)
 
 	// FIXME read from env vasriable
-	logFile, err := os.OpenFile("github-security-auditor.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logFile, err := os.OpenFile(
+		"github-security-auditor.log",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
+		0644,
+	)
 	if err != nil {
 		log.Fatal(err)
 	}

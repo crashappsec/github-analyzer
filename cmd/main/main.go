@@ -26,7 +26,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "github-security-auditor",
 		Short: "A tool to collect and highlight potential security issues with a GitHub org",
-		Long: `A tool to collect and highlight potential security issues with a GitHub org. It looks 
+		Long: `A tool to collect and highlight potential security issues with a GitHub org. It looks
 	at things like:
 	* Webhooks
 	* User configuration
@@ -60,11 +60,16 @@ func NewRootCommand() *cobra.Command {
 			_ = ioutil.WriteFile(config.ViperEnv.OutputFile, output, 0644)
 		},
 	}
-	rootCmd.Flags().StringVarP(&config.ViperEnv.CfgFile, "config", "", "", "config file (default is $HOME/.github-security-auditor.yaml)")
-	rootCmd.Flags().StringVarP(&config.ViperEnv.Organization, "organization", "", "", "The organization we want to check the security on")
-	rootCmd.Flags().StringVarP(&config.ViperEnv.OutputFile, "output", "", "githubsecurity.json", "The file that should have the output recorded to")
-	rootCmd.Flags().StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
-	rootCmd.Flags().StringVarP(&config.ViperEnv.TokenName, "tokenName", "", "GH_SECURITY_AUDITOR_TOKEN", "The environment variable name we should retrieve the token for API authentication")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.CfgFile, "config", "", "", "config file (default is $HOME/.github-security-auditor.yaml)")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.Organization, "organization", "", "", "The organization we want to check the security on")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.OutputFile, "output", "", "githubsecurity.json", "The file that should have the output recorded to")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
+	rootCmd.Flags().
+		StringVarP(&config.ViperEnv.TokenName, "tokenName", "", "GH_SECURITY_AUDITOR_TOKEN", "The environment variable name we should retrieve the token for API authentication")
 
 	rootCmd.MarkFlagRequired("organization")
 	return rootCmd

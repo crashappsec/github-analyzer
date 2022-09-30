@@ -41,7 +41,9 @@ func NewOrganization(
 
 	if err != nil {
 		if resp.StatusCode == 403 {
-			log.Logger.Errorf("Unable to retrieve organization information. It appears the token being used doesn't have access to this information.")
+			log.Logger.Errorf(
+				"Unable to retrieve organization information. It appears the token being used doesn't have access to this information.",
+			)
 		} else {
 			log.Logger.Error(err)
 		}
@@ -131,7 +133,9 @@ func (org *Organization) GetUsers(ctx context.Context) (
 
 		if err != nil {
 			if resp.StatusCode == 403 {
-				log.Logger.Infoln("It appears the token being used doesn't have access to this information")
+				log.Logger.Infoln(
+					"It appears the token being used doesn't have access to this information",
+				)
 			} else {
 				log.Logger.Error(err)
 			}
@@ -183,7 +187,11 @@ func (org *Organization) GetCollaborators(ctx context.Context) (
 	}
 
 	for {
-		orgMembers, resp, err := org.client.Organizations.ListOutsideCollaborators(ctx, *org.info.Login, opt)
+		orgMembers, resp, err := org.client.Organizations.ListOutsideCollaborators(
+			ctx,
+			*org.info.Login,
+			opt,
+		)
 
 		if _, ok := err.(*github.RateLimitError); ok {
 			d := org.backoff.Duration()
@@ -194,7 +202,9 @@ func (org *Organization) GetCollaborators(ctx context.Context) (
 
 		if err != nil {
 			if resp.StatusCode == 403 {
-				log.Logger.Infoln("It appears the token being used doesn't have access to this information")
+				log.Logger.Infoln(
+					"It appears the token being used doesn't have access to this information",
+				)
 			} else {
 				log.Logger.Error(err)
 			}
@@ -255,7 +265,9 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 
 		if err != nil {
 			if resp.StatusCode == 403 {
-				log.Logger.Infoln("It appears the token being used doesn't have access to this information")
+				log.Logger.Infoln(
+					"It appears the token being used doesn't have access to this information",
+				)
 			} else {
 				log.Logger.Error(err)
 			}
@@ -295,11 +307,14 @@ func (org Organization) Audit2FA(
 	if !*org.CoreStats.TwoFactorRequirementEnabled {
 		missing2FA := issue.Issue{
 			// FIXME we need a central definition of all of those
-			ID:          "2FA-0",
-			Name:        "Organization 2FA disabled",
-			Severity:    severity.Medium,
-			Category:    category.Authentication,
-			Description: fmt.Sprintf("Two-factor authentication requirement in organization '%s' is disabled", *org.info.Login),
+			ID:       "2FA-0",
+			Name:     "Organization 2FA disabled",
+			Severity: severity.Medium,
+			Category: category.Authentication,
+			Description: fmt.Sprintf(
+				"Two-factor authentication requirement in organization '%s' is disabled",
+				*org.info.Login,
+			),
 			Resources: []resource.Resource{
 				{
 					ID:   *org.info.Login,
@@ -318,18 +333,24 @@ func (org Organization) Audit2FA(
 		for _, user := range users {
 			if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
 				usersLacking2FA = append(usersLacking2FA, *user.Login)
-				resources = append(resources, resource.Resource{ID: *user.Login, Kind: resource.UserAccount})
+				resources = append(
+					resources,
+					resource.Resource{ID: *user.Login, Kind: resource.UserAccount},
+				)
 			}
 		}
 
 		if len(usersLacking2FA) > 0 {
 			usersMissing2FA := issue.Issue{
-				ID:          "2FA-1",
-				Name:        "Users without 2FA configured",
-				Severity:    severity.Low,
-				Category:    category.Authentication,
-				CWEs:        []int{308},
-				Description: fmt.Sprintf("The following users have not enabled 2FA: %s", strings.Join(usersLacking2FA, ", ")),
+				ID:       "2FA-1",
+				Name:     "Users without 2FA configured",
+				Severity: severity.Low,
+				Category: category.Authentication,
+				CWEs:     []int{308},
+				Description: fmt.Sprintf(
+					"The following users have not enabled 2FA: %s",
+					strings.Join(usersLacking2FA, ", "),
+				),
 				Resources:   resources,
 				Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
 			}
@@ -343,19 +364,25 @@ func (org Organization) Audit2FA(
 	for _, user := range collaborators {
 		if user.TwoFactorAuthentication == nil || !*user.TwoFactorAuthentication {
 			collaboratorsLacking2FA = append(collaboratorsLacking2FA, *user.Login)
-			resources = append(resources, resource.Resource{ID: *user.Login, Kind: resource.UserAccount})
+			resources = append(
+				resources,
+				resource.Resource{ID: *user.Login, Kind: resource.UserAccount},
+			)
 		}
 	}
 
 	if len(collaboratorsLacking2FA) > 0 {
 		collaboratorsMissing2FA := issue.Issue{
-			ID:          "2FA-2",
-			Name:        "Collaborators without 2FA configured",
-			Severity:    severity.Low,
-			Category:    category.Authentication,
-			Resources:   resources,
-			CWEs:        []int{308},
-			Description: fmt.Sprintf("The following collaborators have not enabled 2FA: %s", strings.Join(collaboratorsLacking2FA, ", ")),
+			ID:        "2FA-2",
+			Name:      "Collaborators without 2FA configured",
+			Severity:  severity.Low,
+			Category:  category.Authentication,
+			Resources: resources,
+			CWEs:      []int{308},
+			Description: fmt.Sprintf(
+				"The following collaborators have not enabled 2FA: %s",
+				strings.Join(collaboratorsLacking2FA, ", "),
+			),
 			Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
 		}
 		issues = append(issues, collaboratorsMissing2FA)
