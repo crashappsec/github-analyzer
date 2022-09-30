@@ -3,6 +3,7 @@ module github.com/crashappsec/github-security-auditor
 go 1.19
 
 require (
+	github.com/google/go-github/scrape v0.0.0-20220927202716-0c3cd12a1e6d
 	github.com/google/go-github/v47 v47.1.0
 	github.com/jpillora/backoff v1.0.0
 	github.com/spf13/cobra v1.5.0
@@ -13,6 +14,8 @@ require (
 )
 
 require (
+	github.com/PuerkitoBio/goquery v1.8.0 // indirect
+	github.com/andybalholm/cascadia v1.3.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.4 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
@@ -26,6 +29,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
+	github.com/xlzd/gotp v0.0.0-20181030022105-c8557ba2c119 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect

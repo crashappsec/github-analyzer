@@ -29,8 +29,6 @@ bin/
 /misc/cgo/life/run.out
 /misc/cgo/stdio/run.out
 /misc/cgo/testso/main
-/pkg/
-/src/*.*/
 /test.out
 /test/garbage/*.out
 /test/pass.out

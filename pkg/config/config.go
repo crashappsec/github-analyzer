@@ -7,11 +7,15 @@ const (
 )
 
 type ViperEnvVars struct {
-	CfgFile      string `mapstructure:"CFG_FILE"`
-	Organization string `mapstructure:"ORGANIZATION"`
-	OutputFile   string `mapstructure:"OUTPUT_FILE"`
-	ScmURL       string `mapstructure:"SCM_URL"`
-	TokenName    string `mapstructure:"TOKEN_NAME"`
+	CfgFile        string `mapstructure:"CFG_FILE"`
+	Organization   string `mapstructure:"ORGANIZATION"`
+	OutputFile     string `mapstructure:"OUTPUT_FILE"`
+	EnableScraping bool   `mapstructure:"ENABLE_SCRAPING"`
+	Username       string `mapstructure:"USERNAME"`
+	Password       string `mapstructure:"PASSWORD"`
+	Otp            string `mapstructure:"OTP"`
+	ScmURL         string `mapstructure:"SCM_URL"`
+	TokenName      string `mapstructure:"TOKEN_NAME"`
 }
 
 var ViperEnv ViperEnvVars
