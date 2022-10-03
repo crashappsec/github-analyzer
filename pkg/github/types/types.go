@@ -130,28 +130,36 @@ type RepoCoreStats struct {
 }
 
 type User struct {
-	Login                   *string `json:"login,omitempty"`
-	ID                      *int64  `json:"id,omitempty"`
-	NodeID                  *string `json:"node_id,omitempty"`
-	HTMLURL                 *string `json:"html_url,omitempty"`
-	Name                    *string `json:"name,omitempty"`
-	Company                 *string `json:"company,omitempty"`
-	Blog                    *string `json:"blog,omitempty"`
-	Location                *string `json:"location,omitempty"`
-	Email                   *string `json:"email,omitempty"`
-	Hireable                *bool   `json:"hireable,omitempty"`
-	PublicRepos             *int    `json:"public_repos,omitempty"`
-	PublicGists             *int    `json:"public_gists,omitempty"`
-	Followers               *int    `json:"followers,omitempty"`
-	Following               *int    `json:"following,omitempty"`
-	Type                    *string `json:"type,omitempty"`
-	SiteAdmin               *bool   `json:"site_admin,omitempty"`
-	TotalPrivateRepos       *int    `json:"total_private_repos,omitempty"`
-	OwnedPrivateRepos       *int    `json:"owned_private_repos,omitempty"`
-	PrivateGists            *int    `json:"private_gists,omitempty"`
-	TwoFactorAuthentication *bool   `json:"two_factor_authentication,omitempty"`
-	GistsURL                *string `json:"gists_url,omitempty"`
-	OrganizationsURL        *string `json:"organizations_url,omitempty"`
-	ReposURL                *string `json:"repos_url,omitempty"`
-	RoleName                *string `json:"role_name,omitempty"`
+	Login                   *string         `json:"login,omitempty"`
+	ID                      *int64          `json:"id,omitempty"`
+	NodeID                  *string         `json:"node_id,omitempty"`
+	HTMLURL                 *string         `json:"html_url,omitempty"`
+	Name                    *string         `json:"name,omitempty"`
+	Company                 *string         `json:"company,omitempty"`
+	Blog                    *string         `json:"blog,omitempty"`
+	Location                *string         `json:"location,omitempty"`
+	Email                   *string         `json:"email,omitempty"`
+	Hireable                *bool           `json:"hireable,omitempty"`
+	PublicRepos             *int            `json:"public_repos,omitempty"`
+	PublicGists             *int            `json:"public_gists,omitempty"`
+	Followers               *int            `json:"followers,omitempty"`
+	Following               *int            `json:"following,omitempty"`
+	Type                    *string         `json:"type,omitempty"`
+	SiteAdmin               *bool           `json:"site_admin,omitempty"`
+	TotalPrivateRepos       *int            `json:"total_private_repos,omitempty"`
+	OwnedPrivateRepos       *int            `json:"owned_private_repos,omitempty"`
+	PrivateGists            *int            `json:"private_gists,omitempty"`
+	TwoFactorAuthentication *bool           `json:"two_factor_authentication,omitempty"`
+	GistsURL                *string         `json:"gists_url,omitempty"`
+	OrganizationsURL        *string         `json:"organizations_url,omitempty"`
+	ReposURL                *string         `json:"repos_url,omitempty"`
+	Permissions             map[string]bool `json:"permissions,omitempty"`
+	RoleName                *string         `json:"role_name,omitempty"`
 }
+
+type InstallID int64
+type RepoName string
+type RunnerID int64
+type UserLogin string
+type WebhookID int64
+type WorkflowID int64

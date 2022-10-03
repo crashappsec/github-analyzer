@@ -82,68 +82,17 @@ func WorkflowsAggregator(workflows *github.Workflows) []types.Workflow {
 	return repoWorkflows
 }
 
-// FIXME merge the different pagination methods into one
-func GetOrgPaginatedResult[T any, K any](
+func GetPaginatedResult[T any, K any](
 	ctx context.Context,
 	backoff *backoff.Backoff,
-	callInput string,
-	callCtx context.Context,
 	callOpts *github.ListOptions,
-	githubCall func(ctx context.Context, org string, opts *github.ListOptions) (K, *github.Response, error),
+	githubCall func(opts *github.ListOptions) (K, *github.Response, error),
 	aggregator func(K) []T,
 ) ([]T, error) {
 
 	var results []T
 	for {
-		raw, resp, err := githubCall(callCtx, callInput, callOpts)
-
-		if _, ok := err.(*github.RateLimitError); ok {
-			d := backoff.Duration()
-			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
-			time.Sleep(d)
-			continue
-		}
-
-		if err != nil {
-			if resp.StatusCode == 403 {
-				log.Logger.Infoln(
-					"It appears the token being used doesn't have access to this information",
-				)
-			} else {
-				log.Logger.Error(err)
-			}
-			return results, err
-		}
-
-		backoff.Reset()
-		for _, res := range aggregator(raw) {
-			results = append(results, res)
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-
-		callOpts.Page = resp.NextPage
-	}
-
-	return results, nil
-}
-
-func GetRepoPaginatedResult[T any, K any](
-	ctx context.Context,
-	backoff *backoff.Backoff,
-	callInput1 string,
-	callInput2 string,
-	callCtx context.Context,
-	callOpts *github.ListOptions,
-	githubCall func(ctx context.Context, org string, repo string, opts *github.ListOptions) (K, *github.Response, error),
-	aggregator func(K) []T,
-) ([]T, error) {
-
-	var results []T
-	for {
-		raw, resp, err := githubCall(callCtx, callInput1, callInput2, callOpts)
+		raw, resp, err := githubCall(callOpts)
 
 		if _, ok := err.(*github.RateLimitError); ok {
 			d := backoff.Duration()
