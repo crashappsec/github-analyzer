@@ -157,9 +157,9 @@ type User struct {
 	RoleName                *string         `json:"role_name,omitempty"`
 }
 
-type InstallID int64
-type RepoName string
-type RunnerID int64
-type UserLogin string
-type WebhookID int64
-type WorkflowID int64
+type InstallID = int64
+type RepoName = string
+type RunnerID = int64
+type UserLogin = string
+type WebhookID = int64
+type WorkflowID = int64

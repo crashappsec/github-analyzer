@@ -166,7 +166,7 @@ func (org *Organization) GetUsers(ctx context.Context) (
 		return org.Users, nil
 	}
 
-	log.Logger.Debugf("Fetching users for %s\n", *org.info.Login)
+	log.Logger.Debugf("Fetching users for %s", *org.info.Login)
 	opt := &github.ListMembersOptions{
 		ListOptions: github.ListOptions{PerPage: org.paginationSize},
 	}
@@ -222,7 +222,7 @@ func (org *Organization) GetCollaborators(ctx context.Context) (
 	}
 
 	log.Logger.Debugf(
-		"Fetching external collaborators for %s\n",
+		"Fetching external collaborators for %s",
 		*org.info.Login,
 	)
 	opt := &github.ListOutsideCollaboratorsOptions{
@@ -279,7 +279,7 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 		return org.Repositories, nil
 	}
 
-	log.Logger.Debugf("Fetching repositories for %s\n", *org.info.Login)
+	log.Logger.Debugf("Fetching repositories for %s", *org.info.Login)
 	opt := &github.RepositoryListByOrgOptions{
 		ListOptions: github.ListOptions{PerPage: org.paginationSize},
 	}
@@ -521,31 +521,85 @@ func (org Organization) AuditMemberPermissions(
 	ctx context.Context) ([]issue.Issue, error) {
 	var issues []issue.Issue
 
+	// userRepoPermissions holds a list of all repos with a given permission for a given user
+	type userRepoPermissions map[string]([]types.RepoName)
+	// permission summary is the list of different permissions for a user
+	permissionSummary := map[types.UserLogin]userRepoPermissions{}
+
 	repos, err := org.GetRepositories(ctx)
 	if err != nil {
 		log.Logger.Error(err)
 		return issues, err
 	}
 	for _, r := range repos {
-		log.Logger.Infoln(*r.CoreStats.Name)
-		println("--------------------")
 		collabs, _ := r.GetCollaborators(ctx)
 		for _, u := range collabs {
-			fmt.Println(github.Stringify(u))
+
 			perms, _, err := org.client.Repositories.GetPermissionLevel(
 				ctx,
 				*org.info.Login,
 				*r.CoreStats.Name,
 				*u.Login,
 			)
-			fmt.Println(github.Stringify(perms))
+
+			userPerms, ok := permissionSummary[types.UserLogin(*u.Login)]
+			if ok {
+				// we've seen permissions for this user before
+				previous, found := userPerms[*perms.Permission]
+				if found {
+					previous = append(
+						previous,
+						types.RepoName(*r.CoreStats.Name),
+					)
+					userPerms[*perms.Permission] = previous
+				} else {
+					userPerms[*perms.Permission] = []types.RepoName{types.RepoName(*r.CoreStats.Name)}
+				}
+				permissionSummary[types.UserLogin(*u.Login)] = userPerms
+			} else {
+				permissionSummary[types.UserLogin(*u.Login)] = userRepoPermissions{*perms.Permission: []types.RepoName{types.RepoName(*r.CoreStats.Name)}}
+			}
+
+			// update permissions for general book keeping
+			if len(
+				r.Collaborators[types.UserLogin(*u.Login)].Permissions,
+			) == 0 {
+				repoUser := r.Collaborators[types.UserLogin(*u.Login)]
+				//update permissions
+				repoUser.Permissions = perms.User.Permissions
+			}
 			if err != nil {
 				log.Logger.Error(err)
 				continue
 			}
 		}
 	}
-	panic("dfasdfasdf")
+	for u, perms := range permissionSummary {
+		allPerms := []string{}
+		for perm, repos := range perms {
+			allPerms = append(allPerms,
+				fmt.Sprintf("has '%s' access to repositories: %s",
+					perm, strings.Join(repos, ", ")))
+		}
+		issues = append(issues, issue.Issue{
+			ID:       "Config-Permissions",
+			Name:     "Permissions overview for collaborators",
+			Severity: severity.Informational,
+			Category: category.LeastPrivilege,
+			Description: fmt.Sprintf(
+				"User '%s' %v",
+				u,
+				strings.Join(allPerms, ", and "),
+			),
+			Resources: []resource.Resource{
+				{
+					ID:   string(u),
+					Kind: resource.UserAccount,
+				},
+			},
+			Remediation: "Please examine if the permissions for the given user match your expectations",
+		})
+	}
 	return issues, nil
 }
 
@@ -553,8 +607,7 @@ func (org Organization) Audit(
 	ctx context.Context) ([]issue.Issue, error) {
 	var allIssues []issue.Issue
 	auditHooks := [](func(context.Context) ([]issue.Issue, error)){
-		// org.AuditMemberPermissions, org.AuditCoreStats, org.AuditWebhooks, org.Audit2FA,
-		org.Audit2FA,
+		org.AuditMemberPermissions, org.AuditCoreStats, org.AuditWebhooks, org.Audit2FA,
 	}
 
 	for _, hook := range auditHooks {

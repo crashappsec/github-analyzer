@@ -111,7 +111,7 @@ func (repo *Repository) GetCollaborators(ctx context.Context) (
 	}
 
 	log.Logger.Debugf(
-		"Fetching external collaborators for %s\n",
+		"Fetching external collaborators for %s",
 		*repo.info.Name,
 	)
 	opt := &github.ListCollaboratorsOptions{
