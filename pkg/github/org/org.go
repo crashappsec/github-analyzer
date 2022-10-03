@@ -10,10 +10,7 @@ import (
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"
 	"github.com/crashappsec/github-security-auditor/pkg/github/utils"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/category"
 	"github.com/crashappsec/github-security-auditor/pkg/issue/resource"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/tags"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
@@ -340,27 +337,7 @@ func (org Organization) Audit2FA(
 
 	log.Logger.Debug("Checking if 2FA is required at org-level")
 	if !*org.CoreStats.TwoFactorRequirementEnabled {
-		missing2FA := issue.Issue{
-			// FIXME we need a central definition of all of those
-			ID:       "2FA-0",
-			Name:     "Organization 2FA disabled",
-			Severity: severity.Medium,
-			Category: category.Authentication,
-			Description: fmt.Sprintf(
-				"Two-factor authentication requirement in organization '%s' is disabled",
-				*org.info.Login,
-			),
-			Resources: []resource.Resource{
-				{
-					ID:   *org.info.Login,
-					Kind: resource.Organization,
-				},
-			},
-			// FIXME we could be doing markdown / html / etc. both these and descriptions could ge tlong so we need something better
-			Remediation: "Please see https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization for steps on how to configure 2FA for your organization",
-		}
-
-		issues = append(issues, missing2FA)
+		issues = append(issues, issue.Org2FADisabled(*org.info.Login))
 
 		usersLacking2FA := []string{}
 		resources := []resource.Resource{}
@@ -380,20 +357,10 @@ func (org Organization) Audit2FA(
 		}
 
 		if len(usersLacking2FA) > 0 {
-			usersMissing2FA := issue.Issue{
-				ID:       "2FA-1",
-				Name:     "Users without 2FA configured",
-				Severity: severity.Low,
-				Category: category.Authentication,
-				CWEs:     []int{308},
-				Description: fmt.Sprintf(
-					"The following users have not enabled 2FA: %s",
-					strings.Join(usersLacking2FA, ", "),
-				),
-				Resources:   resources,
-				Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
-			}
-			issues = append(issues, usersMissing2FA)
+			issues = append(
+				issues,
+				issue.UsersWithout2FA(usersLacking2FA, resources),
+			)
 		}
 	}
 
@@ -415,20 +382,10 @@ func (org Organization) Audit2FA(
 	}
 
 	if len(collaboratorsLacking2FA) > 0 {
-		collaboratorsMissing2FA := issue.Issue{
-			ID:        "2FA-2",
-			Name:      "Collaborators without 2FA configured",
-			Severity:  severity.Low,
-			Category:  category.Authentication,
-			Resources: resources,
-			CWEs:      []int{308},
-			Description: fmt.Sprintf(
-				"The following collaborators have not enabled 2FA: %s",
-				strings.Join(collaboratorsLacking2FA, ", "),
-			),
-			Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
-		}
-		issues = append(issues, collaboratorsMissing2FA)
+		issues = append(
+			issues,
+			issue.CollaboratorsWithout2FA(collaboratorsLacking2FA, resources),
+		)
 	}
 	return issues, nil
 }
@@ -447,21 +404,10 @@ func (org Organization) AuditWebhooks(
 			continue
 		}
 		if !strings.HasPrefix(url.(string), "https") {
-			issues = append(issues, issue.Issue{
-				ID:       "WH-0",
-				Name:     "Insecure webhook payload URL",
-				Severity: severity.High,
-				Category: category.InformationDisclosure,
-				CWEs:     []int{319},
-				Description: fmt.Sprintf(
-					"Non-HTTPS webhook detected: %s",
-					url.(string),
-				),
-				Resources: []resource.Resource{
-					{ID: url.(string), Kind: resource.Webhook},
-				},
-				Remediation: "It is recommended to use HTTPS webhooks if data involved is sensitive and also enable SSL verification as outlined in https://docs.github.com/en/developers/webhooks-and-events/webhooks/creating-webhooks",
-			})
+			issues = append(
+				issues,
+				issue.InsecureWebhookPayloadURL(url.(string)),
+			)
 		}
 	}
 	return issues, nil
@@ -472,47 +418,17 @@ func (org Organization) AuditCoreStats(
 	var issues []issue.Issue
 
 	if !*org.CoreStats.AdvancedSecurityEnabledForNewRepos {
-		issues = append(issues, issue.Issue{
-			ID:       "Config-AdvancedSecurity-0",
-			Name:     "Advanced security disabled for new repositories",
-			Severity: severity.Medium,
-			Category: category.ToolingAndAutomation,
-			CWEs:     []int{319},
-			Description: fmt.Sprintf(
-				"Advanced security disabled for org %s",
-				*org.info.Login,
-			),
-			Resources: []resource.Resource{
-				{
-					ID:   *org.info.Login,
-					Kind: resource.Organization,
-				},
-			},
-			Tags:        []tags.Tag{tags.AdvancedSecurity},
-			Remediation: "Pleasee see https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security for how to enable secret scanning in your repositories",
-		})
+		issues = append(
+			issues,
+			issue.OrgAdvancedSecurityDisabled(*org.info.Login),
+		)
 	}
 
 	if !*org.CoreStats.SecretScanningEnabledForNewRepos {
-		issues = append(issues, issue.Issue{
-			ID:       "Config-AdvancedSecurity-1",
-			Name:     "Secret scanning disabled for new repositories",
-			Severity: severity.Medium,
-			Category: category.InformationDisclosure,
-			CWEs:     []int{319},
-			Description: fmt.Sprintf(
-				"Secret scanning disabled for org %s",
-				*org.info.Login,
-			),
-			Resources: []resource.Resource{
-				{
-					ID:   *org.info.Login,
-					Kind: resource.Organization,
-				},
-			},
-			Tags:        []tags.Tag{tags.AdvancedSecurity},
-			Remediation: "Pleasee see https://docs.github.com/en/github-ae@latest/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories for how to enable secret scanning in your repositories",
-		})
+		issues = append(
+			issues,
+			issue.OrgSecretScanningDisabledForNewRepos(*org.info.Login),
+		)
 	}
 	return issues, nil
 }
@@ -581,24 +497,7 @@ func (org Organization) AuditMemberPermissions(
 				fmt.Sprintf("has '%s' access to repositories: %s",
 					perm, strings.Join(repos, ", ")))
 		}
-		issues = append(issues, issue.Issue{
-			ID:       "Config-Permissions",
-			Name:     "Permissions overview for collaborators",
-			Severity: severity.Informational,
-			Category: category.LeastPrivilege,
-			Description: fmt.Sprintf(
-				"User '%s' %v",
-				u,
-				strings.Join(allPerms, ", and "),
-			),
-			Resources: []resource.Resource{
-				{
-					ID:   string(u),
-					Kind: resource.UserAccount,
-				},
-			},
-			Remediation: "Please examine if the permissions for the given user match your expectations",
-		})
+		issues = append(issues, issue.UserPermissionStats(u, allPerms))
 	}
 	return issues, nil
 }
