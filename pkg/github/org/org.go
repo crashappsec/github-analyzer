@@ -22,8 +22,7 @@ type Organization struct {
 	backoff        *backoff.Backoff
 	paginationSize int
 
-	CoreStats *types.OrgCoreStats
-	// FIXME change to maps of ids
+	CoreStats     *types.OrgCoreStats
 	Users         map[types.UserLogin]types.User
 	Collaborators map[types.UserLogin]types.User
 	Repositories  map[types.RepoName]repo.Repository
@@ -32,7 +31,6 @@ type Organization struct {
 	Runners       map[types.RunnerID]types.Runner
 }
 
-// TODO: check public gists
 func NewOrganization(
 	ctx context.Context,
 	client *github.Client,
@@ -182,7 +180,7 @@ func (org *Organization) GetUsers(ctx context.Context) (
 			var users []types.User
 			for _, m := range ghUsers {
 				// XXX information from listing collborators is incomplete
-				// we meed tp explicitly fetch user info
+				// we need to explicitly fetch user info
 				u, _, err := org.client.Users.Get(ctx, *m.Login)
 				if err != nil {
 					log.Logger.Error(err)
