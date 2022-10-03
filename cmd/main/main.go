@@ -103,12 +103,12 @@ func NewRootCommand() *cobra.Command {
 		StringVarP(&config.ViperEnv.Password, "password", "p", "", "Password (required if enableScraping is set)")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.Otp, "otp", "", "", "One Time Password (required if enableScraping is set)")
-	// rootCmd.MarkFlagsRequiredTogether(
-	// 	"enableScraping",
-	// 	"username",
-	// 	"password",
-	// 	"otp",
-	// )
+	rootCmd.MarkFlagsRequiredTogether(
+		"enableScraping",
+		"username",
+		"password",
+		"otp",
+	)
 
 	return rootCmd
 }
