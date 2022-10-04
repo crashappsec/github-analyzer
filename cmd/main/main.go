@@ -29,6 +29,13 @@ func runCmd() {
 	var issues []issue.Issue
 
 	if config.ViperEnv.EnableScraping {
+		if config.ViperEnv.Username == "" ||
+			config.ViperEnv.Password == "" ||
+			config.ViperEnv.Otp == "" {
+			log.Logger.Fatalf(
+				"The following flags are required for scraping --username, --password, --otp",
+			)
+		}
 		sissues, err := scraping.AuditScraping(
 			config.ViperEnv.Username,
 			config.ViperEnv.Password,
@@ -67,12 +74,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "github-security-auditor",
 		Short: "A tool to collect and highlight potential security issues with a GitHub org",
-		Long: `A tool to collect and highlight potential security issues with a GitHub org. It looks
-	at things like:
-	* Webhooks
-	* User configuration
-	* Number of guests
-	* Repo and Organization-level settings`,
+		Long:  "A tool to collect and highlight potential security issues with a GitHub org",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 			return initializeConfig(cmd)
@@ -81,7 +83,7 @@ func NewRootCommand() *cobra.Command {
 			runCmd()
 		},
 	}
-	// FIXME change the command line flags to allow auditing an org / repo etc
+	// TODO allow auditing a repo only
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.Organization, "organization", "", "", "The organization we want to check the security on")
 	rootCmd.MarkFlagRequired("organization")
@@ -103,12 +105,6 @@ func NewRootCommand() *cobra.Command {
 		StringVarP(&config.ViperEnv.Password, "password", "p", "", "Password (required if enableScraping is set)")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.Otp, "otp", "", "", "One Time Password (required if enableScraping is set)")
-	rootCmd.MarkFlagsRequiredTogether(
-		"enableScraping",
-		"username",
-		"password",
-		"otp",
-	)
 
 	return rootCmd
 }

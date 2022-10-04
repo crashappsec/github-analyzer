@@ -1,80 +1,104 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/crashappsec/github-security-auditor/blob/main/LICENSE)
-<!-- [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ossf/scorecard/badge)](https://api.securityscorecards.dev/projects/github.com/crashappsec/github-security-auditor) -->
-<!-- [![Go Report Card](https://goreportcard.com/badge/github.com/ossf/scorecard/v4)](https://goreportcard.com/report/github.com/crashappsec/github-security-auditor) -->
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ossf/scorecard/badge)](https://api.securityscorecards.dev/projects/github.com/crashappsec/github-security-auditor)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ossf/scorecard/v4)](https://goreportcard.com/report/github.com/crashappsec/github-security-auditor)
 
 # Github Security Auditor
-Audits a Github organization for potential security problems.
+
+Audits a GitHub organization for potential security issues. The tool is currently in pre-alpha stage and only supports limited functionality, however we will be actively adding checks in the upcoming months, and welcome contributions from the community!
+
+
+### Available Checks
+
+|                       Name                      |               Category               |    Severity   | Resource Affected |
+|:-----------------------------------------------:|:------------------------------------:|:-------------:|:-----------------:|
+| Application restrictions disabled               |            Least Privilege           |     High      |    Organization   |
+| Insecure Webhook payload URL                    |        Information Disclosure        |     High      |      Webhook      |
+| Advanced security disabled for new repositories | Tooling and Automation Configuration |    Medium     |    Organization   |
+| Secret scanning disabled for new repositories   | Tooling and Automation Configuration |    Medium     |    Organization   |
+| Organization 2FA disabled                       |            Authentication            |    Medium     |    Organization   |
+| Users without 2FA configured                    |            Authentication            |      Low      |    User Account   |
+| Permissions overview for users                  |            Least Privilege           | Informational |    User Account   |
+| OAuth application summary                       |            Least Privilege           | Informational |    Organization   |
+
+
+### Sample Output
+For each issue identified, a JSON with associated information will be generated. A sample output snippet is as follows:
+
+```
+...
+ {
+  "id": "CONFIG_AS_1",
+  "name": "Secret scanning disabled for new repositories",
+  "severity": 3,
+  "category": "Information disclosure to untrusted parties",
+  "tags": [
+   "GitHub Advanced Security feature"
+  ],
+  "description": "Secret scanning disabled for org testorg",
+  "resource": [
+   {
+    "id": "testorg",
+    "kind": "Organization"
+   }
+  ],
+  "cwes": [
+   319
+  ],
+  "remediation": "Pleasee see https://docs.github.com/en/github-ae@latest/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories for how to enable secret scanning in your repositories"
+ },
+ {
+  "id": "AUTH_2FA_2",
+  "name": "Users without 2FA configured",
+  "severity": 2,
+  "category": "Authentication",
+  "description": "The following collaborators have not enabled 2FA: testuser1, testuser2",
+  "resource": [
+   {
+    "id": "testuser1",
+    "kind": "UserAccount"
+   },
+   {
+    "id": "testuser2",
+    "kind": "UserAccount"
+   }
+  ],
+  "cwes": [
+   308
+  ],
+  "remediation": "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts"
+ }
+...
+```
 
 ## How to run
-Set a github token to an environment variable, by default the program
-looks for the environment variable name `GIT_TOKEN` but a different
-environment name can be set through the command line argument `--tokenName`.
 
-By default the output goes to the file `githubsecurity.json`.
+You can see available options via the `--help` flag.
 
-### Running locally
+#### Running locally
 * From the root of the directory run `make`
 * Run `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
 
-### Running using Docker
+#### Running using Docker
 
-* Run `docker compose run auditor --organization crahsappsec`
+Run `docker compose run auditor --organization crahsappsec`
 
-### Permissions Needed for Token
-In order to run all of the scans the token must have the following permissions.
-![Github token permissions](img/github_token_permissions.png)
+### Permissions
 
-### Full Usage
+For **API-based based checks**, you need to pass in a personal access token (PAT) with the appropriate permissions. Example use:
+
+`./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
+
+See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#creating-a-token) for instructions on setting up a token to be used with the auditor.
+
+
+For **experimental scraping-based checks**, you need to pass in your username and password, as well your two factor authentication one-time-password, as needed. Example usage:
+
+```shell
+./bin/auditor --organization crashappsec --tokenName GIT_ADMIN --enableScraping --enableStats --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED"
+
 ```
-A tool to collect and highlight potential security issues with a GitHub org. It looks
-	at things like:
-	* Webhooks
-	* User configuration
-	* Number of guests
-	* Repo and Organization-level settings
+See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#setting-up-2fa-experimental) for instructions on setting up a token to be used with the auditor.
 
-Usage:
-  githubsecurityauditor [flags]
-
-Flags:
-      --config string         config file (default is $HOME/.githubsecurityauditor.yaml)
-  -h, --help                  help for githubsecurityauditor
-      --organization string   The organization we want to check the security on
-      --output string         The file that should have the output recorded to (default "githubsecurity.json")
-      --scmUrl string         The API URL for the source control management software you want to check
-      --tokenName string      The environment variable name we should retrieve the token for API authentication (default "GIT_TOKEN")
-```
-### Example Output
-```
-{
- "TwoFactorAuthEnabled": true,
- "NumberPrivateRepos": 1,
- "NumberPublicRepos": 1,
- "Webhooks": null,
- "ApplicationInstallations": null,
- "ActionRunners": null,
- "Repositories": [
-  {
-   "Name": "repocrawler",
-   "URL": "https://github.com/CodeReconCo/repocrawler",
-   "IsPrivate": false,
-   "Webhooks": null,
-   "HasWiki": false,
-   "VulnerabilityAlertsEnabled": true,
-   "Workflows": null
-  },
-  {
-   "Name": "githubsecurityauditor",
-   "URL": "https://github.com/CodeReconCo/githubsecurityauditor",
-   "IsPrivate": true,
-   "Webhooks": null,
-   "HasWiki": true,
-   "VulnerabilityAlertsEnabled": true,
-   "Workflows": null
-  }
- ]
-}
-```
 
 # Credits
 
