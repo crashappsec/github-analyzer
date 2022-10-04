@@ -5,33 +5,32 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"
 	"github.com/crashappsec/github-security-auditor/pkg/github/utils"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/category"
 	"github.com/crashappsec/github-security-auditor/pkg/issue/resource"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
 )
 
 type Organization struct {
-	info    *github.Organization
-	client  *github.Client
-	backoff *backoff.Backoff
+	info           *github.Organization
+	client         *github.Client
+	backoff        *backoff.Backoff
+	paginationSize int
 
 	CoreStats     *types.OrgCoreStats
-	Users         []types.User
-	Collaborators []types.User
-	Repositories  []repo.Repository
-	Webhooks      []types.Webhook
+	Users         map[types.UserLogin]types.User
+	Collaborators map[types.UserLogin]types.User
+	Repositories  map[types.RepoName]repo.Repository
+	Webhooks      map[types.WebhookID]types.Webhook
+	Installations map[types.InstallID]types.Install
+	Runners       map[types.RunnerID]types.Runner
 }
 
-// TODO: check public gists
 func NewOrganization(
 	ctx context.Context,
 	client *github.Client,
@@ -56,10 +55,11 @@ func NewOrganization(
 	_ = json.Unmarshal(orgJson, &stats)
 
 	org := Organization{
-		info:      orgInfo,
-		client:    client,
-		backoff:   backoff,
-		CoreStats: &stats,
+		info:           orgInfo,
+		client:         client,
+		backoff:        backoff,
+		paginationSize: 100,
+		CoreStats:      &stats,
 	}
 	return &org, nil
 }
@@ -67,252 +67,265 @@ func NewOrganization(
 // GetWebhook returns the webhooks for a given org. Upon first call,
 // it lazily updates the Organization with the webhook information
 func (org Organization) GetWebhooks(
-	ctx context.Context) ([]types.Webhook, error) {
+	ctx context.Context) (map[types.WebhookID]types.Webhook, error) {
 	if len(org.Webhooks) > 0 {
 		return org.Webhooks, nil
 	}
 
-	hooks, err := utils.GetOrgPaginatedResult(
+	opt := &github.ListOptions{PerPage: org.paginationSize}
+	hooks, err := utils.GetPaginatedResult(
 		ctx,
 		org.backoff,
-		*org.info.Login,
-		ctx, &github.ListOptions{PerPage: 100},
-		org.client.Organizations.ListHooks,
-		utils.WebhooksAggregator)
-	org.Webhooks = hooks
-	return hooks, err
+		opt,
+		func(opts *github.ListOptions) ([]*github.Hook, *github.Response, error) {
+			return org.client.Organizations.ListHooks(ctx,
+				*org.info.Login,
+				opt,
+			)
+		},
+		utils.WebhooksAggregator,
+	)
+
+	hookMap := make(map[types.WebhookID]types.Webhook, len(hooks))
+	for _, h := range hooks {
+		hookMap[types.WebhookID(*h.ID)] = h
+	}
+	org.Webhooks = hookMap
+	return hookMap, err
 }
 
 func (org Organization) GetInstalls(
-	ctx context.Context,
-) ([]types.Install, error) {
-	return utils.GetOrgPaginatedResult(
+	ctx context.Context) (map[types.InstallID]types.Install, error) {
+	if len(org.Installations) > 0 {
+		return org.Installations, nil
+	}
+
+	opt := &github.ListOptions{PerPage: org.paginationSize}
+	installs, err := utils.GetPaginatedResult(
 		ctx,
 		org.backoff,
-		*org.info.Login,
-		ctx, &github.ListOptions{PerPage: 100},
-		org.client.Organizations.ListInstallations,
-		utils.InstallsAggregator)
+		opt,
+		func(opts *github.ListOptions) (*github.OrganizationInstallations, *github.Response, error) {
+			return org.client.Organizations.ListInstallations(
+				ctx,
+				*org.info.Login,
+				opt,
+			)
+		},
+		utils.InstallsAggregator,
+	)
+
+	installMap := make(map[types.InstallID]types.Install, len(installs))
+	for _, i := range installs {
+		installMap[types.InstallID(*i.ID)] = i
+	}
+	org.Installations = installMap
+	return installMap, err
 }
 
-func (org *Organization) GetActionRunners(
-	ctx context.Context,
-) ([]types.Runner, error) {
-	return utils.GetOrgPaginatedResult(
+func (org Organization) GetActionRunners(
+	ctx context.Context) (map[types.RunnerID]types.Runner, error) {
+	if len(org.Runners) > 0 {
+		return org.Runners, nil
+	}
+
+	opt := &github.ListOptions{PerPage: org.paginationSize}
+	runners, err := utils.GetPaginatedResult(
 		ctx,
 		org.backoff,
-		*org.info.Login,
-		ctx,
-		&github.ListOptions{PerPage: 100},
-		org.client.Actions.ListOrganizationRunners,
-		utils.RunnersAggregator)
+		opt,
+		func(opts *github.ListOptions) (*github.Runners, *github.Response, error) {
+			return org.client.Actions.ListOrganizationRunners(
+				ctx,
+				*org.info.Login,
+				opt,
+			)
+		},
+		utils.RunnersAggregator,
+	)
+
+	runnerMap := make(map[types.RunnerID]types.Runner, len(runners))
+	for _, r := range runners {
+		runnerMap[types.RunnerID(*r.ID)] = r
+	}
+	org.Runners = runnerMap
+	return runnerMap, err
 }
 
 // GetUsers returns the users for a given org. Upon first call,
 // it lazily updates the Organization with the user information
 func (org *Organization) GetUsers(ctx context.Context) (
-	[]types.User, error) {
+	map[types.UserLogin]types.User, error) {
 
 	if len(org.Users) > 0 {
 		return org.Users, nil
 	}
 
-	log.Logger.Debugf("Fetching users for %s\n", *org.info.Login)
-	var users []types.User
-	// XXX there exists a filter option for fetching only thouse with 2fa_disabled
-	// but for users let's fetch all information
+	log.Logger.Debugf("Fetching users for %s", *org.info.Login)
 	opt := &github.ListMembersOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+		ListOptions: github.ListOptions{PerPage: org.paginationSize},
+	}
+	users, err := utils.GetPaginatedResult(
+		ctx,
+		org.backoff,
+		&opt.ListOptions,
+		func(opts *github.ListOptions) ([]*github.User, *github.Response, error) {
+			return org.client.Organizations.ListMembers(
+				ctx,
+				*org.info.Login,
+				opt,
+			)
+		},
+		func(ghUsers []*github.User) []types.User {
+			var users []types.User
+			for _, m := range ghUsers {
+				// XXX information from listing collborators is incomplete
+				// we need to explicitly fetch user info
+				u, _, err := org.client.Users.Get(ctx, *m.Login)
+				if err != nil {
+					log.Logger.Error(err)
+					continue
+				}
+				user := types.User{}
+				// FIXME use reflection
+				userJson, _ := json.Marshal(u)
+				_ = json.Unmarshal(userJson, &user)
+				users = append(users, user)
+			}
+			return users
+		},
+	)
+	if err != nil {
+		log.Logger.Error(err)
 	}
 
-	for {
-		orgMembers, resp, err := org.client.Organizations.ListMembers(
-			ctx,
-			*org.info.Login,
-			opt,
-		)
-
-		if _, ok := err.(*github.RateLimitError); ok {
-			d := org.backoff.Duration()
-			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
-			time.Sleep(d)
-			continue
-		}
-
-		if err != nil {
-			if resp.StatusCode == 403 {
-				log.Logger.Infoln(
-					"It appears the token being used doesn't have access to this information",
-				)
-			} else {
-				log.Logger.Error(err)
-			}
-			return users, err
-		}
-
-		org.backoff.Reset()
-		for _, m := range orgMembers {
-			// FIXME this seems to return more information although in principle it should be the same
-			// as in members - is there any param we could be missing?
-			u, _, err := org.client.Users.Get(ctx, *m.Login)
-			if err != nil {
-				log.Logger.Error(err)
-				continue
-			}
-			user := types.User{}
-			// FIXME use reflection
-			userJson, _ := json.Marshal(u)
-			_ = json.Unmarshal(userJson, &user)
-			users = append(users, user)
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-
-		opt.Page = resp.NextPage
+	members := make(map[types.UserLogin]types.User, len(users))
+	for _, u := range users {
+		members[types.UserLogin(*u.Login)] = u
 	}
-
-	org.Users = users
-	return users, nil
+	org.Users = members
+	return members, nil
 }
 
-// GetUsers returns the users for a given org. Upon first call,
+// GetCollaborators returns the outside collaborators for a given org. Upon first call,
 // it lazily updates the Organization with the user information
 func (org *Organization) GetCollaborators(ctx context.Context) (
-	[]types.User, error) {
+	map[types.UserLogin]types.User, error) {
 
 	if len(org.Collaborators) > 0 {
 		return org.Collaborators, nil
 	}
 
-	log.Logger.Debugf("Fetching collaborators for %s\n", *org.info.Login)
-	var users []types.User
-	// XXX there exists a filter option for fetching only thouse with 2fa_disabled
-	// but for users let's fetch all information
+	log.Logger.Debugf(
+		"Fetching external collaborators for %s",
+		*org.info.Login,
+	)
 	opt := &github.ListOutsideCollaboratorsOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+		ListOptions: github.ListOptions{PerPage: org.paginationSize},
+	}
+	users, err := utils.GetPaginatedResult(
+		ctx,
+		org.backoff,
+		&opt.ListOptions,
+		func(opts *github.ListOptions) ([]*github.User, *github.Response, error) {
+			return org.client.Organizations.ListOutsideCollaborators(
+				ctx,
+				*org.info.Login,
+				opt,
+			)
+		},
+		func(ghUsers []*github.User) []types.User {
+			var users []types.User
+			for _, m := range ghUsers {
+				// XXX information from listing collborators is incomplete
+				// we meed tp explicitly fetch user info
+				u, _, err := org.client.Users.Get(ctx, *m.Login)
+				if err != nil {
+					log.Logger.Error(err)
+					continue
+				}
+				user := types.User{}
+				// FIXME use reflection
+				userJson, _ := json.Marshal(u)
+				_ = json.Unmarshal(userJson, &user)
+				users = append(users, user)
+			}
+			return users
+		},
+	)
+	if err != nil {
+		log.Logger.Error(err)
 	}
 
-	for {
-		orgMembers, resp, err := org.client.Organizations.ListOutsideCollaborators(
-			ctx,
-			*org.info.Login,
-			opt,
-		)
-
-		if _, ok := err.(*github.RateLimitError); ok {
-			d := org.backoff.Duration()
-			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
-			time.Sleep(d)
-			continue
-		}
-
-		if err != nil {
-			if resp.StatusCode == 403 {
-				log.Logger.Infoln(
-					"It appears the token being used doesn't have access to this information",
-				)
-			} else {
-				log.Logger.Error(err)
-			}
-			return users, err
-		}
-
-		org.backoff.Reset()
-		for _, m := range orgMembers {
-			// FIXME this seems to return more information although in principle it should be the same
-			// as in members - is there any param we could be missing?
-			u, _, err := org.client.Users.Get(ctx, *m.Login)
-			if err != nil {
-				log.Logger.Error(err)
-				continue
-			}
-			user := types.User{}
-			// FIXME use reflection
-			userJson, _ := json.Marshal(u)
-			_ = json.Unmarshal(userJson, &user)
-			users = append(users, user)
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-
-		opt.Page = resp.NextPage
+	collaborators := make(map[types.UserLogin]types.User, len(users))
+	for _, u := range users {
+		collaborators[types.UserLogin(*u.Login)] = u
 	}
-
-	org.Collaborators = users
-	return users, nil
+	org.Collaborators = collaborators
+	return collaborators, nil
 }
 
 // GetRepositories returns the repositories for a given org. Upon first call,
 // it lazily updates the Organization with the repository information
 func (org *Organization) GetRepositories(ctx context.Context) (
-	[]repo.Repository, error) {
+	map[types.RepoName]repo.Repository, error) {
 
 	if len(org.Repositories) > 0 {
 		return org.Repositories, nil
 	}
 
-	log.Logger.Debugf("Fetching repositories for %s\n", *org.info.Login)
-	var repos []repo.Repository
+	log.Logger.Debugf("Fetching repositories for %s", *org.info.Login)
 	opt := &github.RepositoryListByOrgOptions{
-		ListOptions: github.ListOptions{PerPage: 100},
+		ListOptions: github.ListOptions{PerPage: org.paginationSize},
 	}
-
-	for {
-		ghRepositories, resp, err := org.client.Repositories.ListByOrg(
-			ctx,
-			*org.info.Login,
-			opt,
-		)
-
-		if _, ok := err.(*github.RateLimitError); ok {
-			d := org.backoff.Duration()
-			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
-			time.Sleep(d)
-			continue
-		}
-
-		if err != nil {
-			if resp.StatusCode == 403 {
-				log.Logger.Infoln(
-					"It appears the token being used doesn't have access to this information",
-				)
-			} else {
-				log.Logger.Error(err)
-			}
-			return repos, err
-		}
-
-		org.backoff.Reset()
-		for _, ghRepository := range ghRepositories {
-			r, err := repo.NewRepository(
+	ghRepos, err := utils.GetPaginatedResult(
+		ctx,
+		org.backoff,
+		&opt.ListOptions,
+		func(opts *github.ListOptions) ([]*github.Repository, *github.Response, error) {
+			return org.client.Repositories.ListByOrg(
 				ctx,
-				org.client,
-				org.backoff,
-				ghRepository,
+				*org.info.Login,
+				opt,
 			)
-			if err != nil {
-				log.Logger.Error(err)
-				continue
+		},
+		func(ghRepositories []*github.Repository) []repo.Repository {
+			var repos []repo.Repository
+			for _, ghRepository := range ghRepositories {
+				// ghRepository has incomplete information at this stage wrt to Org
+				ghRepo, _, err := org.client.Repositories.GetByID(
+					ctx,
+					*ghRepository.ID,
+				)
+				if err != nil {
+					log.Logger.Error(err)
+					continue
+				}
+				r, err := repo.NewRepository(
+					ctx,
+					org.client,
+					org.backoff,
+					ghRepo,
+				)
+				if err != nil {
+					log.Logger.Error(err)
+					continue
+				}
+				repos = append(repos, *r)
 			}
-			repos = append(repos, *r)
-		}
-
-		if resp.NextPage == 0 {
-			break
-		}
-
-		// As of today The Go compiler does not support accessing a struct field x.f where
-		// x is of type parameter type even if all types in the type
-		// parameter's type set have a field f.
-		opt.Page = resp.NextPage
+			return repos
+		},
+	)
+	if err != nil {
+		log.Logger.Error(err)
 	}
 
-	org.Repositories = repos
-	return repos, nil
+	repositories := make(map[types.RepoName]repo.Repository, len(ghRepos))
+	for _, r := range ghRepos {
+		repositories[types.RepoName(*r.CoreStats.Name)] = r
+	}
+	org.Repositories = repositories
+	return repositories, nil
 }
 
 func (org Organization) Audit2FA(
@@ -322,27 +335,7 @@ func (org Organization) Audit2FA(
 
 	log.Logger.Debug("Checking if 2FA is required at org-level")
 	if !*org.CoreStats.TwoFactorRequirementEnabled {
-		missing2FA := issue.Issue{
-			// FIXME we need a central definition of all of those
-			ID:       "2FA-0",
-			Name:     "Organization 2FA disabled",
-			Severity: severity.Medium,
-			Category: category.Authentication,
-			Description: fmt.Sprintf(
-				"Two-factor authentication requirement in organization '%s' is disabled",
-				*org.info.Login,
-			),
-			Resources: []resource.Resource{
-				{
-					ID:   *org.info.Login,
-					Kind: resource.Organization,
-				},
-			},
-			// FIXME we could be doing markdown / html / etc. both these and descriptions could ge tlong so we need something better
-			Remediation: "Please see https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-two-factor-authentication-for-your-organization/requiring-two-factor-authentication-in-your-organization for steps on how to configure 2FA for your organization",
-		}
-
-		issues = append(issues, missing2FA)
+		issues = append(issues, issue.Org2FADisabled(*org.info.Login))
 
 		usersLacking2FA := []string{}
 		resources := []resource.Resource{}
@@ -362,20 +355,10 @@ func (org Organization) Audit2FA(
 		}
 
 		if len(usersLacking2FA) > 0 {
-			usersMissing2FA := issue.Issue{
-				ID:       "2FA-1",
-				Name:     "Users without 2FA configured",
-				Severity: severity.Low,
-				Category: category.Authentication,
-				CWEs:     []int{308},
-				Description: fmt.Sprintf(
-					"The following users have not enabled 2FA: %s",
-					strings.Join(usersLacking2FA, ", "),
-				),
-				Resources:   resources,
-				Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
-			}
-			issues = append(issues, usersMissing2FA)
+			issues = append(
+				issues,
+				issue.UsersWithout2FA(usersLacking2FA, resources),
+			)
 		}
 	}
 
@@ -397,20 +380,10 @@ func (org Organization) Audit2FA(
 	}
 
 	if len(collaboratorsLacking2FA) > 0 {
-		collaboratorsMissing2FA := issue.Issue{
-			ID:        "2FA-2",
-			Name:      "Collaborators without 2FA configured",
-			Severity:  severity.Low,
-			Category:  category.Authentication,
-			Resources: resources,
-			CWEs:      []int{308},
-			Description: fmt.Sprintf(
-				"The following collaborators have not enabled 2FA: %s",
-				strings.Join(collaboratorsLacking2FA, ", "),
-			),
-			Remediation: "Please see https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication for steps on how to configure 2FA for individual accounts",
-		}
-		issues = append(issues, collaboratorsMissing2FA)
+		issues = append(
+			issues,
+			issue.CollaboratorsWithout2FA(collaboratorsLacking2FA, resources),
+		)
 	}
 	return issues, nil
 }
@@ -429,22 +402,100 @@ func (org Organization) AuditWebhooks(
 			continue
 		}
 		if !strings.HasPrefix(url.(string), "https") {
-			issues = append(issues, issue.Issue{
-				ID:       "WH-0",
-				Name:     "Insecure webhook payload URL",
-				Severity: severity.High,
-				Category: category.InformationDisclosure,
-				CWEs:     []int{319},
-				Description: fmt.Sprintf(
-					"Non-HTTPS webhook detected: %s",
-					url.(string),
-				),
-				Resources: []resource.Resource{
-					{ID: url.(string), Kind: resource.Webhook},
-				},
-				Remediation: "It is recommended to use HTTPS webhooks if data involved is sensitive and also enable SSL verification as outlined in https://docs.github.com/en/developers/webhooks-and-events/webhooks/creating-webhooks",
-			})
+			issues = append(
+				issues,
+				issue.InsecureWebhookPayloadURL(url.(string)),
+			)
 		}
+	}
+	return issues, nil
+}
+
+func (org Organization) AuditCoreStats(
+	ctx context.Context) ([]issue.Issue, error) {
+	var issues []issue.Issue
+
+	if !*org.CoreStats.AdvancedSecurityEnabledForNewRepos {
+		issues = append(
+			issues,
+			issue.OrgAdvancedSecurityDisabled(*org.info.Login),
+		)
+	}
+
+	if !*org.CoreStats.SecretScanningEnabledForNewRepos {
+		issues = append(
+			issues,
+			issue.OrgSecretScanningDisabledForNewRepos(*org.info.Login),
+		)
+	}
+	return issues, nil
+}
+
+func (org Organization) AuditMemberPermissions(
+	ctx context.Context) ([]issue.Issue, error) {
+	var issues []issue.Issue
+
+	// userRepoPermissions holds a list of all repos with a given permission for a given user
+	type userRepoPermissions map[string]([]types.RepoName)
+	// permission summary is the list of different permissions for a user
+	permissionSummary := map[types.UserLogin]userRepoPermissions{}
+
+	repos, err := org.GetRepositories(ctx)
+	if err != nil {
+		log.Logger.Error(err)
+		return issues, err
+	}
+	for _, r := range repos {
+		collabs, _ := r.GetCollaborators(ctx)
+		for _, u := range collabs {
+
+			perms, _, err := org.client.Repositories.GetPermissionLevel(
+				ctx,
+				*org.info.Login,
+				*r.CoreStats.Name,
+				*u.Login,
+			)
+
+			userPerms, ok := permissionSummary[types.UserLogin(*u.Login)]
+			if ok {
+				// we've seen permissions for this user before
+				previous, found := userPerms[*perms.Permission]
+				if found {
+					previous = append(
+						previous,
+						types.RepoName(*r.CoreStats.Name),
+					)
+					userPerms[*perms.Permission] = previous
+				} else {
+					userPerms[*perms.Permission] = []types.RepoName{types.RepoName(*r.CoreStats.Name)}
+				}
+				permissionSummary[types.UserLogin(*u.Login)] = userPerms
+			} else {
+				permissionSummary[types.UserLogin(*u.Login)] = userRepoPermissions{*perms.Permission: []types.RepoName{types.RepoName(*r.CoreStats.Name)}}
+			}
+
+			// update permissions for general book keeping
+			if len(
+				r.Collaborators[types.UserLogin(*u.Login)].Permissions,
+			) == 0 {
+				repoUser := r.Collaborators[types.UserLogin(*u.Login)]
+				//update permissions
+				repoUser.Permissions = perms.User.Permissions
+			}
+			if err != nil {
+				log.Logger.Error(err)
+				continue
+			}
+		}
+	}
+	for u, perms := range permissionSummary {
+		allPerms := []string{}
+		for perm, repos := range perms {
+			allPerms = append(allPerms,
+				fmt.Sprintf("has '%s' access to repositories: %s",
+					perm, strings.Join(repos, ", ")))
+		}
+		issues = append(issues, issue.UserPermissionStats(u, allPerms))
 	}
 	return issues, nil
 }
@@ -453,7 +504,7 @@ func (org Organization) Audit(
 	ctx context.Context) ([]issue.Issue, error) {
 	var allIssues []issue.Issue
 	auditHooks := [](func(context.Context) ([]issue.Issue, error)){
-		org.AuditWebhooks, org.Audit2FA,
+		org.AuditMemberPermissions, org.AuditCoreStats, org.AuditWebhooks, org.Audit2FA,
 	}
 
 	for _, hook := range auditHooks {

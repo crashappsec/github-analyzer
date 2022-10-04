@@ -8,4 +8,5 @@ const (
 	Authentication                 = "Authentication"
 	Authorization                  = "Authorization"
 	InformationDisclosure          = "Information disclosure to untrusted parties"
+	ToolingAndAutomation           = "Tooling and automatino configuration"
 )
