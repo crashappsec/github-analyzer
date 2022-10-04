@@ -19,6 +19,8 @@ const (
 	WH_0                  = "WH_0"
 	CONFIG_AS_0           = "CONFIG_AS_0"
 	CONFIG_AS_1           = "CONFIG_AS_1"
+	CONFIG_APP_0          = "CONFIG_APP_0"
+	CONFIG_APP_1          = "CONFIG_APP_1"
 	CONFIG_PERM_0         = "CONFIG_PERM_0"
 )
 
@@ -173,5 +175,45 @@ func UserPermissionStats(user string, permissions []string) Issue {
 		},
 		Remediation: "Please examine if the permissions for the given user match your expectations",
 	}
+}
 
+func ApplicationRestrictionsDisabled(org string) Issue {
+	return Issue{
+		ID:       CONFIG_APP_0,
+		Name:     "Application restrictions disabled",
+		Severity: severity.High,
+		Category: category.LeastPrivilege,
+		Description: fmt.Sprintf(
+			"Application restrictions for organization '%s' is disabled. Without OAuth App access restrictions any App is automatically granted access to the organization account when any organization member installs and authorizes the App, even if they do so for a personal account. This can lead to untrusted apps accessing organization resources",
+			org,
+		),
+		Resources: []resource.Resource{
+			{
+				ID:   org,
+				Kind: resource.Organization,
+			},
+		},
+		Remediation: "Please see https://docs.github.com/en/organizations/restricting-access-to-your-organizations-data/about-oauth-app-access-restrictions for steps on how to configure OAuth App access for your organization",
+	}
+}
+
+func OAuthStats(org string, appinfo []string) Issue {
+	return Issue{
+		ID:       CONFIG_APP_1,
+		Name:     "OAuth application summary",
+		Severity: severity.Informational,
+		Category: category.LeastPrivilege,
+		Description: fmt.Sprintf(
+			"OAuth apps for '%s': %s",
+			org,
+			strings.Join(appinfo, ", "),
+		),
+		Resources: []resource.Resource{
+			{
+				ID:   org,
+				Kind: resource.Organization,
+			},
+		},
+		Remediation: "Please ensure the OAuth Apps installed in your org meet your expectations",
+	}
 }
