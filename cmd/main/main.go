@@ -31,7 +31,7 @@ func runCmd() {
 	if config.ViperEnv.EnableScraping {
 		if config.ViperEnv.Username == "" ||
 			config.ViperEnv.Password == "" ||
-			config.ViperEnv.Otp == "" {
+			config.ViperEnv.OtpSeed == "" {
 			log.Logger.Fatalf(
 				"The following flags are required for scraping --username, --password, --otp",
 			)
@@ -39,7 +39,7 @@ func runCmd() {
 		sissues, err := scraping.AuditScraping(
 			config.ViperEnv.Username,
 			config.ViperEnv.Password,
-			config.ViperEnv.Otp,
+			config.ViperEnv.OtpSeed,
 			config.ViperEnv.Organization)
 		if err != nil {
 			log.Logger.Error(err)
@@ -104,13 +104,14 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.Password, "password", "p", "", "Password (required if enableScraping is set)")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Otp, "otp", "", "", "One Time Password (required if enableScraping is set)")
+		StringVarP(&config.ViperEnv.OtpSeed, "otpSeed", "", "", "One Time Password (required if enableScraping is set)")
 
 	return rootCmd
 }
 
 func initializeConfig(cmd *cobra.Command) error {
 	v := viper.New()
+	v.SetDefault("Verbose", true)
 	// TODO add a file-based config
 	v.SetConfigName(config.ConfigFileBasename)
 	v.AddConfigPath(".")
