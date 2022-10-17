@@ -44,7 +44,13 @@ func NewGithubAuditor(token string) (*GithubAuditor, error) {
 	return &GithubAuditor{client: github.NewClient(tc)}, nil
 }
 
-func (gs GithubAuditor) AuditOrg(name string) ([]issue.Issue, error) {
+// AuditOrg runs a series of checks on a given organization and returns the
+// issues found, execution state for each check run (whether it was successful
+// or yielded in an error), and a generic overall error if audit fails overall
+func (gs GithubAuditor) AuditOrg(
+	name string,
+	enableStats bool,
+) ([]issue.Issue, map[issue.IssueID]error, error) {
 	ctx := context.Background()
 	back := &backoff.Backoff{
 		Min:    10 * time.Second,
@@ -54,8 +60,8 @@ func (gs GithubAuditor) AuditOrg(name string) ([]issue.Issue, error) {
 	org, err := org.NewOrganization(ctx, gs.client, back, name)
 	if err != nil {
 		log.Logger.Error(err)
-		return nil, err
+		return nil, nil, err
 	}
 
-	return org.Audit(ctx)
+	return org.Audit(ctx, enableStats)
 }

@@ -1,14 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 
-	"encoding/json"
-	"io/ioutil"
+	"path/filepath"
 
 	"github.com/crashappsec/github-security-auditor/pkg/config"
+	"github.com/crashappsec/github-security-auditor/pkg/futils"
 	"github.com/crashappsec/github-security-auditor/pkg/github/auditor"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
@@ -27,6 +28,9 @@ func main() {
 
 func runCmd() {
 	var issues []issue.Issue
+	var checkStatuses map[issue.IssueID]error
+
+	futils.Init()
 
 	if config.ViperEnv.EnableScraping {
 		if config.ViperEnv.Username == "" ||
@@ -36,15 +40,17 @@ func runCmd() {
 				"The following flags are required for scraping --username, --password, --otp",
 			)
 		}
-		sissues, err := scraping.AuditScraping(
+		sissues, execStatus, err := scraping.AuditScraping(
 			config.ViperEnv.Username,
 			config.ViperEnv.Password,
 			config.ViperEnv.OtpSeed,
-			config.ViperEnv.Organization)
+			config.ViperEnv.Organization,
+			config.ViperEnv.EnableStats)
 		if err != nil {
 			log.Logger.Error(err)
 		}
 		issues = append(issues, sissues...)
+		checkStatuses = execStatus
 	}
 
 	token := os.Getenv(config.ViperEnv.TokenName)
@@ -56,18 +62,36 @@ func runCmd() {
 			log.Logger.Error(err)
 			return
 		}
-		results, err := auditor.AuditOrg(config.ViperEnv.Organization)
+		results, execStatus, err := auditor.AuditOrg(config.ViperEnv.Organization, config.ViperEnv.EnableStats)
 		if err != nil {
 			log.Logger.Error(err)
 		}
 		issues = append(issues, results...)
+
+		for id, err := range execStatus {
+			prevError, ok := checkStatuses[id]
+			if !ok {
+				// this is the first time we see this check
+				checkStatuses[id] = err
+				continue
+			}
+			// if we have additional errors just merge them for now
+			if err != nil {
+				if prevError != nil {
+					checkStatuses[id] = errors.New(err.Error() + prevError.Error())
+				}
+			}
+		}
 	}
 
-	output, _ := json.MarshalIndent(issues, "", " ")
-	// XXX remove this
-	log.Logger.Infof("%s", output)
-	_ = ioutil.WriteFile(config.ViperEnv.OutputFile, output, 0644)
-
+	futils.SerializeFile(
+		checkStatuses,
+		filepath.Join(futils.IssuesDir, "issues.json"),
+	)
+	futils.SerializeFile(
+		checkStatuses,
+		filepath.Join(futils.MetadataDir, "execStatus.json"),
+	)
 }
 
 func NewRootCommand() *cobra.Command {
@@ -91,11 +115,14 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.CfgFile, "config", "c", "", "config file (default is $HOME/.github-security-auditor.yaml)")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.OutputFile, "output", "o", "githubsecurity.json", "The file that should have the output recorded to")
+		StringVarP(&config.ViperEnv.OutputDir, "output", "o", "output", "The directory containing the artifacts of the analysis")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.TokenName, "tokenName", "", "GH_SECURITY_AUDITOR_TOKEN", "The environment variable name we should retrieve the token for API authentication")
+
+	rootCmd.Flags().
+		BoolVarP(&config.ViperEnv.EnableStats, "enableStats", "", false, "Enable statistic-only reports (might be slow due to throttling limits)")
 
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "Enable experimental checks that rely on screen scraping")
