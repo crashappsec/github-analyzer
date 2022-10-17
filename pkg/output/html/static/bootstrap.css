@@ -61,9 +61,11 @@ a:hover {
   outline: 0;
 }
 
+
 h1 {
+  color: #fff;
   margin: 0.67em 0;
-  font-size: 2em;
+  font-size: 20em;
 }
 
 abbr[title] {
@@ -72,6 +74,7 @@ abbr[title] {
 
 b,
 strong {
+  color: #cfcfcf;
   font-weight: bold;
 }
 
@@ -258,6 +261,7 @@ table {
   p,
   h2,
   h3 {
+    color: #fff;
     orphans: 3;
     widows: 3;
   }
@@ -302,11 +306,12 @@ html {
 }
 
 body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 16px;
-  line-height: 1.428571429;
-  color: #333333;
-  background-color: #f7f7f7;
+  font-family: JetBrains Mono,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #a2a2a2;
+  background-color: #0b1221;
 }
 
 input,
@@ -326,14 +331,18 @@ textarea {
 }
 
 a {
-  color: #d9230f;
+  color: #fff;
+    border: 0;
+    font-style: normal;
+    font-weight: 400;
+    text-align: center;
   text-decoration: none;
+    transition: text-decoration-color .2s ease;
 }
 
 a:hover,
 a:focus {
-  color: #91170a;
-  text-decoration: underline;
+    text-decoration-line: underline;
 }
 
 a:focus {
@@ -464,7 +473,7 @@ h6,
 .h4,
 .h5,
 .h6 {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: JetBrains Mono,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
   font-weight: 500;
   line-height: 1.1;
 }
@@ -1368,6 +1377,13 @@ pre code {
     width: 91.66666666666666%;
   }
   .col-lg-12 {
+  color: #fff;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  margin: -0.1em 0 0.5em 0;
+  text-transform: uppercase;
     width: 100%;
   }
   .col-lg-push-0 {
@@ -1503,7 +1519,7 @@ th {
   padding: 8px;
   line-height: 1.428571429;
   vertical-align: top;
-  border-top: 1px solid #dddddd;
+  border-top: 1px solid #a2e504;
 }
 
 .table thead > tr > th {
@@ -1562,7 +1578,8 @@ th {
 
 .table-hover > tbody > tr:hover > td,
 .table-hover > tbody > tr:hover > th {
-  background-color: #f5f5f5;
+  background-color: #b3ff00;
+  color: #000;
 }
 
 table col[class*="col-"] {
@@ -7322,7 +7339,13 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: "Josefin Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: JetBrains Mono,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
+    color: #fff;
+    font-size: 23px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 34px;
+    margin: 0;
 }
 
 .has-warning .help-block,

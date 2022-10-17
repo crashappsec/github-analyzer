@@ -3,6 +3,9 @@ package scraping
 import (
 	"fmt"
 
+	"path/filepath"
+
+	"github.com/crashappsec/github-security-auditor/pkg/futils"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/scrape"
@@ -39,7 +42,12 @@ func AuditScraping(
 	if err != nil {
 		log.Logger.Error(err)
 	}
-	appinfo := make([]string, len(apps))
+
+	futils.SerializeFile(
+		apps,
+		filepath.Join(futils.MetadataDir, "oauthApps.json"),
+	)
+	var appinfo []string
 	for _, app := range apps {
 		appinfo = append(appinfo, fmt.Sprintf("%+v", app))
 	}

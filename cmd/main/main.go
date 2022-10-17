@@ -13,6 +13,7 @@ import (
 	"github.com/crashappsec/github-security-auditor/pkg/github/auditor"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
+	"github.com/crashappsec/github-security-auditor/pkg/output/html"
 	"github.com/crashappsec/github-security-auditor/pkg/scraping"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -28,6 +29,7 @@ func main() {
 
 func runCmd() {
 	var issues []issue.Issue
+	var stats []issue.Issue
 	var checkStatuses map[issue.IssueID]error
 
 	futils.Init()
@@ -66,7 +68,13 @@ func runCmd() {
 		if err != nil {
 			log.Logger.Error(err)
 		}
-		issues = append(issues, results...)
+		for _, r := range results {
+			if strings.HasPrefix(string(r.ID), "STATS") {
+				stats = append(stats, r)
+			} else {
+				issues = append(issues, r)
+			}
+		}
 
 		for id, err := range execStatus {
 			prevError, ok := checkStatuses[id]
@@ -84,13 +92,25 @@ func runCmd() {
 		}
 	}
 
-	futils.SerializeFile(
-		checkStatuses,
-		filepath.Join(futils.IssuesDir, "issues.json"),
-	)
-	futils.SerializeFile(
-		checkStatuses,
-		filepath.Join(futils.MetadataDir, "execStatus.json"),
+	issuesPath := filepath.Join(futils.IssuesDir, "issues.json")
+	auditStatsPath := filepath.Join(futils.StatsDir, "auditStats.json")
+	execStatusPath := filepath.Join(futils.MetadataDir, "execStatus.json")
+	oauthPath := filepath.Join(futils.MetadataDir, "oauthApps.json")
+	permissionsPath := filepath.Join(futils.MetadataDir, "permissions.json")
+	orgStatsPath := filepath.Join(futils.StatsDir, "orgCoreStats.json")
+
+	futils.SerializeFile(issues, issuesPath)
+	futils.SerializeFile(stats, auditStatsPath)
+	futils.SerializeFile(checkStatuses, execStatusPath)
+
+	html.Serve(
+		config.ViperEnv.Organization,
+		orgStatsPath,
+		permissionsPath,
+		oauthPath,
+		execStatusPath,
+		issuesPath,
+		config.ViperEnv.Port,
 	)
 }
 
@@ -133,6 +153,8 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.OtpSeed, "otpSeed", "", "", "One Time Password (required if enableScraping is set)")
 
+	rootCmd.Flags().
+		IntVarP(&config.ViperEnv.Port, "port", "", 3000, "Port for local http server used to display HTML with summary of findings")
 	return rootCmd
 }
 

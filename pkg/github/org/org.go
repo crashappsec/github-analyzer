@@ -21,6 +21,14 @@ import (
 	"github.com/jpillora/backoff"
 )
 
+type OrgStats struct {
+	CoreStats     *types.OrgCoreStats
+	Collaborators []types.UserLogin
+	Webhooks      map[types.WebhookID]types.Webhook
+	Installations map[types.InstallID]types.Install
+	Runners       map[types.RunnerID]types.Runner
+}
+
 type Organization struct {
 	info           *github.Organization
 	client         *github.Client
@@ -473,6 +481,26 @@ func (org Organization) AuditCoreStats(
 	return issues, execStatus, nil
 }
 
+// Summarize provides generic statistics for a given org and serializes them
+// to disc
+func (org Organization) Summarize() *types.OrgCoreStats {
+	var collaborators []string
+	for u := range org.Collaborators {
+		collaborators = append(collaborators, u)
+	}
+	futils.SerializeFile(
+		OrgStats{
+			CoreStats:     org.CoreStats,
+			Collaborators: collaborators,
+			Webhooks:      org.Webhooks,
+			Installations: org.Installations,
+			Runners:       org.Runners,
+		},
+		filepath.Join(futils.StatsDir, "orgCoreStats.json"),
+	)
+	return org.CoreStats
+}
+
 func (org Organization) AuditMemberPermissions(
 	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var issues []issue.Issue
@@ -591,5 +619,6 @@ func (org Organization) Audit(
 		}
 	}
 
+	org.Summarize()
 	return allIssues, execStatus, nil
 }
