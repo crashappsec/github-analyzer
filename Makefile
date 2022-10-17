@@ -2,6 +2,7 @@
 all: ## compile auditor
 	mkdir -p bin
 	go build -o bin/auditor cmd/main/main.go
+	go build -o bin/report cmd/report/main/main.go
 
 .PHONY: lint
 lint: ## lint everything with pre-commit

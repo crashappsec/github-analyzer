@@ -132,6 +132,11 @@ func (repo *Repository) GetCollaborators(ctx context.Context) (
 		func(ghUsers []*github.User) []types.User {
 			var users []types.User
 			for _, m := range ghUsers {
+				existingUser, ok := repo.Collaborators[types.UserLogin(*m.Login)]
+				if ok {
+					users = append(users, existingUser)
+					continue
+				}
 				// XXX information from listing collborators is incomplete
 				// we meed tp explicitly fetch user info
 				u, _, err := repo.client.Users.Get(ctx, *m.Login)

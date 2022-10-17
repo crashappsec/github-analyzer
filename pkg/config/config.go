@@ -11,6 +11,7 @@ type ViperEnvVars struct {
 	Organization   string `mapstructure:"ORGANIZATION"`
 	OutputFile     string `mapstructure:"OUTPUT_FILE"`
 	EnableScraping bool   `mapstructure:"ENABLE_SCRAPING"`
+	EnableStats    bool   `mapstructure:"ENABLE_STATS"`
 	Username       string `mapstructure:"USERNAME"`
 	Password       string `mapstructure:"PASSWORD"`
 	OtpSeed        string `mapstructure:"OTP_SEED"`

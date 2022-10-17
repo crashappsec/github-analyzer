@@ -45,6 +45,7 @@ func runCmd() {
 			log.Logger.Error(err)
 		}
 		issues = append(issues, sissues...)
+		// FIXME add exec status here
 	}
 
 	token := os.Getenv(config.ViperEnv.TokenName)
@@ -56,15 +57,20 @@ func runCmd() {
 			log.Logger.Error(err)
 			return
 		}
-		results, err := auditor.AuditOrg(config.ViperEnv.Organization)
+		results, execStatus, err := auditor.AuditOrg(config.ViperEnv.Organization, config.ViperEnv.EnableStats)
 		if err != nil {
 			log.Logger.Error(err)
 		}
 		issues = append(issues, results...)
+
+		output, _ := json.MarshalIndent(execStatus, "", " ")
+		// FIXME make this an option in the cmd line
+		log.Logger.Infof("%s", output)
+		_ = ioutil.WriteFile("execStatus.json", output, 0644)
 	}
 
 	output, _ := json.MarshalIndent(issues, "", " ")
-	// XXX remove this
+	// FIXME make this an option in the cmd line
 	log.Logger.Infof("%s", output)
 	_ = ioutil.WriteFile(config.ViperEnv.OutputFile, output, 0644)
 
@@ -96,6 +102,9 @@ func NewRootCommand() *cobra.Command {
 		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.TokenName, "tokenName", "", "GH_SECURITY_AUDITOR_TOKEN", "The environment variable name we should retrieve the token for API authentication")
+
+	rootCmd.Flags().
+		BoolVarP(&config.ViperEnv.EnableStats, "enableStats", "", false, "Enable statistic-only reports (might be slow due to throttling limits)")
 
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "Enable experimental checks that rely on screen scraping")

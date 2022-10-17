@@ -1,0 +1,67 @@
+.well {
+  min-height: 20px;
+  padding-bottom: 2px;
+  background-color: #ffffff;
+  border: 1px solid #dedede;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+          box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+
+.container {
+  max-width: 1050px;
+}
+
+.paperlist {
+    text-align: justify;
+    text-justify: inter-word;
+    padding: 2%;
+    max-width: 1000px;
+}
+
+.paperlist li {
+   padding-bottom: 20px;
+}
+
+.paperlist h2 {
+    border-bottom: 1px solid #eeeeee;
+}
+
+.paper {
+    text-align: justify;
+}
+
+.full_abstract {
+    display: none;
+}
+
+.abstract {
+    color: #D9230F;
+}
+
+.abstract:hover > .full_abstract {
+    display: block;
+    background-color: #ffffff;
+    border: 1px solid #dedede;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.05);
+    color: #333;
+    margin: 5px 0;
+    padding: 5px 10px;
+    width: auto;
+}
+
+#footer {
+  background-color: #efefef;
+}
+
+/* Lastly, apply responsive CSS fixes as necessary */
+@media (max-width: 767px) {
+  #footer {
+    margin-left: -20px;
+    margin-right: -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}

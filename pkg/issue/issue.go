@@ -13,15 +13,15 @@ import (
 type IssueID string
 
 const (
-	AUTH_2FA_0    IssueID = "AUTH_2FA_0"
-	AUTH_2FA_1            = "AUTH_2FA_1"
-	AUTH_2FA_2            = "AUTH_2FA_2"
-	WH_0                  = "WH_0"
-	CONFIG_AS_0           = "CONFIG_AS_0"
-	CONFIG_AS_1           = "CONFIG_AS_1"
-	CONFIG_APP_0          = "CONFIG_APP_0"
-	CONFIG_APP_1          = "CONFIG_APP_1"
-	CONFIG_PERM_0         = "CONFIG_PERM_0"
+	AUTH_2FA_ORG_DISABLED              IssueID = "AUTH_2FA_ORG_DISABLED"
+	AUTH_2FA_USER_DISABLED                     = "AUTH_2FA_USER_DISABLED"
+	AUTH_2FA_COLLABORATOR_DISABLED             = "AUTH_2FA_COLLABORATOR_DISABLED"
+	INF_DISC_HTTP_WEBHOOK                      = "INF_DISC_HTTP_WEBHOOK"
+	INF_DISC_SECRET_SCANNING_DISABLED          = "INF_DISC_SECRET_SCANNING_DISABLED"
+	TOOLING_ADVANCED_SECURITY_DISABLED         = "TOOLING_ADVANCED_SECURITY_DISABLED"
+	LEAST_PRIV_OAUTH_PERMS_DISABLED            = "LEAST_PRIV_OAUTH_PERMS_DISABLED"
+	STATS_OAUTH_PERMS                          = "STATS_OAUTH_PERMS"
+	STATS_USER_PERM                            = "STATS_USER_PERM"
 )
 
 type Issue struct {
@@ -38,7 +38,7 @@ type Issue struct {
 
 func Org2FADisabled(org string) Issue {
 	return Issue{
-		ID:       AUTH_2FA_0,
+		ID:       AUTH_2FA_ORG_DISABLED,
 		Name:     "Organization 2FA disabled",
 		Severity: severity.Medium,
 		Category: category.Authentication,
@@ -61,7 +61,7 @@ func UsersWithout2FA(
 	resources []resource.Resource,
 ) Issue {
 	return Issue{
-		ID:       AUTH_2FA_1,
+		ID:       AUTH_2FA_USER_DISABLED,
 		Name:     "Users without 2FA configured",
 		Severity: severity.Low,
 		Category: category.Authentication,
@@ -80,8 +80,8 @@ func CollaboratorsWithout2FA(
 	resources []resource.Resource,
 ) Issue {
 	return Issue{
-		ID:       AUTH_2FA_2,
-		Name:     "Users without 2FA configured",
+		ID:       AUTH_2FA_COLLABORATOR_DISABLED,
+		Name:     "Collaborators without 2FA configured",
 		Severity: severity.Low,
 		Category: category.Authentication,
 		CWEs:     []int{308},
@@ -96,7 +96,7 @@ func CollaboratorsWithout2FA(
 
 func InsecureWebhookPayloadURL(url string) Issue {
 	return Issue{
-		ID:       WH_0,
+		ID:       INF_DISC_HTTP_WEBHOOK,
 		Name:     "Insecure webhook payload URL",
 		Severity: severity.High,
 		Category: category.InformationDisclosure,
@@ -114,7 +114,7 @@ func InsecureWebhookPayloadURL(url string) Issue {
 
 func OrgAdvancedSecurityDisabled(org string) Issue {
 	return Issue{
-		ID:       CONFIG_AS_0,
+		ID:       TOOLING_ADVANCED_SECURITY_DISABLED,
 		Name:     "Advanced security disabled for new repositories",
 		Severity: severity.Medium,
 		Category: category.ToolingAndAutomation,
@@ -136,7 +136,7 @@ func OrgAdvancedSecurityDisabled(org string) Issue {
 
 func OrgSecretScanningDisabledForNewRepos(org string) Issue {
 	return Issue{
-		ID:       CONFIG_AS_1,
+		ID:       INF_DISC_SECRET_SCANNING_DISABLED,
 		Name:     "Secret scanning disabled for new repositories",
 		Severity: severity.Medium,
 		Category: category.InformationDisclosure,
@@ -158,7 +158,7 @@ func OrgSecretScanningDisabledForNewRepos(org string) Issue {
 
 func UserPermissionStats(user string, permissions []string) Issue {
 	return Issue{
-		ID:       CONFIG_PERM_0,
+		ID:       STATS_USER_PERM,
 		Name:     "Permissions overview for users",
 		Severity: severity.Informational,
 		Category: category.LeastPrivilege,
@@ -179,7 +179,7 @@ func UserPermissionStats(user string, permissions []string) Issue {
 
 func ApplicationRestrictionsDisabled(org string) Issue {
 	return Issue{
-		ID:       CONFIG_APP_0,
+		ID:       LEAST_PRIV_OAUTH_PERMS_DISABLED,
 		Name:     "Application restrictions disabled",
 		Severity: severity.High,
 		Category: category.LeastPrivilege,
@@ -199,7 +199,7 @@ func ApplicationRestrictionsDisabled(org string) Issue {
 
 func OAuthStats(org string, appinfo []string) Issue {
 	return Issue{
-		ID:       CONFIG_APP_1,
+		ID:       STATS_OAUTH_PERMS,
 		Name:     "OAuth application summary",
 		Severity: severity.Informational,
 		Category: category.LeastPrivilege,

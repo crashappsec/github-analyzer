@@ -3,8 +3,11 @@ package org
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
+	"sync"
 
 	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"
@@ -340,17 +343,24 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 }
 
 func (org Organization) Audit2FA(
-	ctx context.Context) ([]issue.Issue, error) {
+	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 
 	var issues []issue.Issue
+	execStatus := map[issue.IssueID]error{}
 
 	log.Logger.Debug("Checking if 2FA is required at org-level")
 	if !*org.CoreStats.TwoFactorRequirementEnabled {
+		execStatus[issue.AUTH_2FA_ORG_DISABLED] = nil
 		issues = append(issues, issue.Org2FADisabled(*org.info.Login))
-
 		usersLacking2FA := []string{}
 		resources := []resource.Resource{}
-		users, _ := org.GetUsers(ctx)
+
+		users, err := org.GetUsers(ctx)
+		if err != nil {
+			log.Logger.Error(err)
+		}
+
+		execStatus[issue.AUTH_2FA_USER_DISABLED] = err
 		for _, user := range users {
 			if user.TwoFactorAuthentication == nil ||
 				!*user.TwoFactorAuthentication {
@@ -374,7 +384,12 @@ func (org Organization) Audit2FA(
 	}
 
 	collaboratorsLacking2FA := []string{}
-	collaborators, _ := org.GetCollaborators(ctx)
+	collaborators, err := org.GetCollaborators(ctx)
+	if err != nil {
+		log.Logger.Error(err)
+	}
+
+	execStatus[issue.AUTH_2FA_COLLABORATOR_DISABLED] = err
 	resources := []resource.Resource{}
 	for _, user := range collaborators {
 		if user.TwoFactorAuthentication == nil ||
@@ -396,14 +411,21 @@ func (org Organization) Audit2FA(
 			issue.CollaboratorsWithout2FA(collaboratorsLacking2FA, resources),
 		)
 	}
-	return issues, nil
+	return issues, execStatus, nil
 }
 
 func (org Organization) AuditWebhooks(
-	ctx context.Context) ([]issue.Issue, error) {
+	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
+
+	execStatus := make(map[issue.IssueID]error, 1)
 	var issues []issue.Issue
 
-	hooks, _ := org.GetWebhooks(ctx)
+	hooks, err := org.GetWebhooks(ctx)
+	if err != nil {
+		log.Logger.Error(err)
+	}
+
+	execStatus[issue.INF_DISC_HTTP_WEBHOOK] = err
 	for _, hook := range hooks {
 		if !*hook.Active {
 			continue
@@ -419,13 +441,16 @@ func (org Organization) AuditWebhooks(
 			)
 		}
 	}
-	return issues, nil
+
+	return issues, execStatus, nil
 }
 
 func (org Organization) AuditCoreStats(
-	ctx context.Context) ([]issue.Issue, error) {
+	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var issues []issue.Issue
+	execStatus := make(map[issue.IssueID]error, 2)
 
+	execStatus[issue.TOOLING_ADVANCED_SECURITY_DISABLED] = nil
 	if !*org.CoreStats.AdvancedSecurityEnabledForNewRepos {
 		issues = append(
 			issues,
@@ -433,18 +458,20 @@ func (org Organization) AuditCoreStats(
 		)
 	}
 
+	execStatus[issue.INF_DISC_SECRET_SCANNING_DISABLED] = nil
 	if !*org.CoreStats.SecretScanningEnabledForNewRepos {
 		issues = append(
 			issues,
 			issue.OrgSecretScanningDisabledForNewRepos(*org.info.Login),
 		)
 	}
-	return issues, nil
+	return issues, execStatus, nil
 }
 
 func (org Organization) AuditMemberPermissions(
-	ctx context.Context) ([]issue.Issue, error) {
+	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var issues []issue.Issue
+	execStatus := make(map[issue.IssueID]error, 1)
 
 	// userRepoPermissions holds a list of all repos with a given permission for a given user
 	type userRepoPermissions map[string]([]types.RepoName)
@@ -452,53 +479,61 @@ func (org Organization) AuditMemberPermissions(
 	permissionSummary := map[types.UserLogin]userRepoPermissions{}
 
 	repos, err := org.GetRepositories(ctx)
+	execStatus[issue.STATS_USER_PERM] = err
 	if err != nil {
 		log.Logger.Error(err)
-		return issues, err
+		return issues, execStatus, err
 	}
+
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
 	for _, r := range repos {
-		collabs, _ := r.GetCollaborators(ctx)
-		for _, u := range collabs {
+		wg.Add(1)
+		go func(r repo.Repository, permissionSummary map[types.UserLogin]userRepoPermissions) {
+			defer wg.Done()
+			collabs, _ := r.GetCollaborators(ctx)
 
-			perms, _, err := org.client.Repositories.GetPermissionLevel(
-				ctx,
-				*org.info.Login,
-				*r.CoreStats.Name,
-				*u.Login,
-			)
-
-			userPerms, ok := permissionSummary[types.UserLogin(*u.Login)]
-			if ok {
-				// we've seen permissions for this user before
-				previous, found := userPerms[*perms.Permission]
-				if found {
-					previous = append(
-						previous,
-						types.RepoName(*r.CoreStats.Name),
-					)
-					userPerms[*perms.Permission] = previous
-				} else {
-					userPerms[*perms.Permission] = []types.RepoName{types.RepoName(*r.CoreStats.Name)}
+			for _, u := range collabs {
+				perms, _, err := org.client.Repositories.GetPermissionLevel(
+					ctx,
+					*org.info.Login,
+					*r.CoreStats.Name,
+					*u.Login,
+				)
+				if err != nil {
+					log.Logger.Error(err)
+					continue
 				}
-				permissionSummary[types.UserLogin(*u.Login)] = userPerms
-			} else {
-				permissionSummary[types.UserLogin(*u.Login)] = userRepoPermissions{*perms.Permission: []types.RepoName{types.RepoName(*r.CoreStats.Name)}}
-			}
 
-			// update permissions for general book keeping
-			if len(
-				r.Collaborators[types.UserLogin(*u.Login)].Permissions,
-			) == 0 {
-				repoUser := r.Collaborators[types.UserLogin(*u.Login)]
-				//update permissions
-				repoUser.Permissions = perms.User.Permissions
+				mutex.Lock()
+				userPerms, ok := permissionSummary[types.UserLogin(*u.Login)]
+				if ok {
+					// we've seen permissions for this user before
+					previous, found := userPerms[*perms.Permission]
+					if found {
+						previous = append(
+							previous,
+							types.RepoName(*r.CoreStats.Name),
+						)
+						userPerms[*perms.Permission] = previous
+					} else {
+						userPerms[*perms.Permission] = []types.RepoName{types.RepoName(*r.CoreStats.Name)}
+					}
+					permissionSummary[types.UserLogin(*u.Login)] = userPerms
+				} else {
+					permissionSummary[types.UserLogin(*u.Login)] = userRepoPermissions{*perms.Permission: []types.RepoName{types.RepoName(*r.CoreStats.Name)}}
+				}
+				mutex.Unlock()
 			}
-			if err != nil {
-				log.Logger.Error(err)
-				continue
-			}
-		}
+		}(
+			r,
+			permissionSummary,
+		)
 	}
+	wg.Wait()
+
+	output, _ := json.MarshalIndent(permissionSummary, "", " ")
+	_ = ioutil.WriteFile("permissionSummary.json", output, 0644)
 	for u, perms := range permissionSummary {
 		allPerms := []string{}
 		for perm, repos := range perms {
@@ -508,23 +543,46 @@ func (org Organization) AuditMemberPermissions(
 		}
 		issues = append(issues, issue.UserPermissionStats(u, allPerms))
 	}
-	return issues, nil
+	return issues, execStatus, nil
 }
 
 func (org Organization) Audit(
-	ctx context.Context) ([]issue.Issue, error) {
+	ctx context.Context,
+	enableStats bool,
+) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var allIssues []issue.Issue
-	auditHooks := [](func(context.Context) ([]issue.Issue, error)){
-		org.AuditMemberPermissions, org.AuditCoreStats, org.AuditWebhooks, org.Audit2FA,
+	execStatus := map[issue.IssueID]error{}
+
+	auditHooks := [](func(context.Context) ([]issue.Issue, map[issue.IssueID]error, error)){
+		org.AuditCoreStats,
+		org.AuditWebhooks,
+		org.Audit2FA,
 	}
 
+	if enableStats {
+		auditHooks = append(auditHooks, org.AuditMemberPermissions)
+	}
 	for _, hook := range auditHooks {
-		hookIssues, err := hook(ctx)
+		hookIssues, execResults, err := hook(ctx)
 		if err != nil {
 			log.Logger.Error(err)
 		}
 		allIssues = append(allIssues, hookIssues...)
+		for id, err := range execResults {
+			prevError, ok := execStatus[id]
+			if !ok {
+				// this is the first time we see this check
+				execStatus[id] = err
+				continue
+			}
+			// if we have additional errors just merge them for now
+			if err != nil {
+				if prevError != nil {
+					execStatus[id] = errors.New(err.Error() + prevError.Error())
+				}
+			}
+		}
 	}
 
-	return allIssues, nil
+	return allIssues, execStatus, nil
 }
