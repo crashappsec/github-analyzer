@@ -9,7 +9,7 @@ const (
 type ViperEnvVars struct {
 	CfgFile        string `mapstructure:"CFG_FILE"`
 	Organization   string `mapstructure:"ORGANIZATION"`
-	OutputFile     string `mapstructure:"OUTPUT_FILE"`
+	OutputDir      string `mapstructure:"OUTPUT_DIR"`
 	EnableScraping bool   `mapstructure:"ENABLE_SCRAPING"`
 	EnableStats    bool   `mapstructure:"ENABLE_STATS"`
 	Username       string `mapstructure:"USERNAME"`

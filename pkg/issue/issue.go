@@ -24,6 +24,18 @@ const (
 	STATS_USER_PERM                            = "STATS_USER_PERM"
 )
 
+var AvailableChecks = map[IssueID]string{
+	AUTH_2FA_ORG_DISABLED:              "Organization 2FA disabled",
+	AUTH_2FA_USER_DISABLED:             "Users without 2FA configured",
+	AUTH_2FA_COLLABORATOR_DISABLED:     "Collaborators without 2FA configured",
+	INF_DISC_HTTP_WEBHOOK:              "Insecure webhook payload URL",
+	INF_DISC_SECRET_SCANNING_DISABLED:  "Secret scanning disabled for new repositories",
+	TOOLING_ADVANCED_SECURITY_DISABLED: "Advanced security disabled for new repositories",
+	LEAST_PRIV_OAUTH_PERMS_DISABLED:    "Application restrictions disabled",
+	STATS_USER_PERM:                    "Permissions overview for users",
+	STATS_OAUTH_PERMS:                  "OAuth application summary",
+}
+
 type Issue struct {
 	ID          IssueID             `json:"id"`
 	Name        string              `json:"name"`
@@ -39,7 +51,7 @@ type Issue struct {
 func Org2FADisabled(org string) Issue {
 	return Issue{
 		ID:       AUTH_2FA_ORG_DISABLED,
-		Name:     "Organization 2FA disabled",
+		Name:     AvailableChecks[AUTH_2FA_ORG_DISABLED],
 		Severity: severity.Medium,
 		Category: category.Authentication,
 		Description: fmt.Sprintf(
@@ -62,7 +74,7 @@ func UsersWithout2FA(
 ) Issue {
 	return Issue{
 		ID:       AUTH_2FA_USER_DISABLED,
-		Name:     "Users without 2FA configured",
+		Name:     AvailableChecks[AUTH_2FA_USER_DISABLED],
 		Severity: severity.Low,
 		Category: category.Authentication,
 		CWEs:     []int{308},
@@ -81,7 +93,7 @@ func CollaboratorsWithout2FA(
 ) Issue {
 	return Issue{
 		ID:       AUTH_2FA_COLLABORATOR_DISABLED,
-		Name:     "Collaborators without 2FA configured",
+		Name:     AvailableChecks[AUTH_2FA_COLLABORATOR_DISABLED],
 		Severity: severity.Low,
 		Category: category.Authentication,
 		CWEs:     []int{308},
@@ -97,7 +109,7 @@ func CollaboratorsWithout2FA(
 func InsecureWebhookPayloadURL(url string) Issue {
 	return Issue{
 		ID:       INF_DISC_HTTP_WEBHOOK,
-		Name:     "Insecure webhook payload URL",
+		Name:     AvailableChecks[INF_DISC_HTTP_WEBHOOK],
 		Severity: severity.High,
 		Category: category.InformationDisclosure,
 		CWEs:     []int{319},
@@ -115,7 +127,7 @@ func InsecureWebhookPayloadURL(url string) Issue {
 func OrgAdvancedSecurityDisabled(org string) Issue {
 	return Issue{
 		ID:       TOOLING_ADVANCED_SECURITY_DISABLED,
-		Name:     "Advanced security disabled for new repositories",
+		Name:     AvailableChecks[TOOLING_ADVANCED_SECURITY_DISABLED],
 		Severity: severity.Medium,
 		Category: category.ToolingAndAutomation,
 		CWEs:     []int{319},
@@ -137,7 +149,7 @@ func OrgAdvancedSecurityDisabled(org string) Issue {
 func OrgSecretScanningDisabledForNewRepos(org string) Issue {
 	return Issue{
 		ID:       INF_DISC_SECRET_SCANNING_DISABLED,
-		Name:     "Secret scanning disabled for new repositories",
+		Name:     AvailableChecks[INF_DISC_SECRET_SCANNING_DISABLED],
 		Severity: severity.Medium,
 		Category: category.InformationDisclosure,
 		CWEs:     []int{319},
@@ -152,14 +164,14 @@ func OrgSecretScanningDisabledForNewRepos(org string) Issue {
 			},
 		},
 		Tags:        []tags.Tag{tags.AdvancedSecurity},
-		Remediation: "Pleasee see https://docs.github.com/en/github-ae@latest/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories for how to enable secret scanning in your repositories",
+		Remediation: "Please see https://docs.github.com/en/github-ae@latest/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories for how to enable secret scanning in your repositories",
 	}
 }
 
 func UserPermissionStats(user string, permissions []string) Issue {
 	return Issue{
 		ID:       STATS_USER_PERM,
-		Name:     "Permissions overview for users",
+		Name:     AvailableChecks[STATS_USER_PERM],
 		Severity: severity.Informational,
 		Category: category.LeastPrivilege,
 		Description: fmt.Sprintf(
@@ -180,7 +192,7 @@ func UserPermissionStats(user string, permissions []string) Issue {
 func ApplicationRestrictionsDisabled(org string) Issue {
 	return Issue{
 		ID:       LEAST_PRIV_OAUTH_PERMS_DISABLED,
-		Name:     "Application restrictions disabled",
+		Name:     AvailableChecks[LEAST_PRIV_OAUTH_PERMS_DISABLED],
 		Severity: severity.High,
 		Category: category.LeastPrivilege,
 		Description: fmt.Sprintf(
@@ -200,7 +212,7 @@ func ApplicationRestrictionsDisabled(org string) Issue {
 func OAuthStats(org string, appinfo []string) Issue {
 	return Issue{
 		ID:       STATS_OAUTH_PERMS,
-		Name:     "OAuth application summary",
+		Name:     AvailableChecks[STATS_OAUTH_PERMS],
 		Severity: severity.Informational,
 		Category: category.LeastPrivilege,
 		Description: fmt.Sprintf(

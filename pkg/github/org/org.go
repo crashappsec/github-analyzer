@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"strings"
 	"sync"
 
+	"path/filepath"
+
+	"github.com/crashappsec/github-security-auditor/pkg/futils"
 	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"
 	"github.com/crashappsec/github-security-auditor/pkg/github/utils"
@@ -349,8 +351,9 @@ func (org Organization) Audit2FA(
 	execStatus := map[issue.IssueID]error{}
 
 	log.Logger.Debug("Checking if 2FA is required at org-level")
+	execStatus[issue.AUTH_2FA_ORG_DISABLED] = nil
+	execStatus[issue.AUTH_2FA_USER_DISABLED] = nil
 	if !*org.CoreStats.TwoFactorRequirementEnabled {
-		execStatus[issue.AUTH_2FA_ORG_DISABLED] = nil
 		issues = append(issues, issue.Org2FADisabled(*org.info.Login))
 		usersLacking2FA := []string{}
 		resources := []resource.Resource{}
@@ -360,6 +363,8 @@ func (org Organization) Audit2FA(
 			log.Logger.Error(err)
 		}
 
+		// we only need to check for 2FA on users if the requirement for the org
+		// is not enabled
 		execStatus[issue.AUTH_2FA_USER_DISABLED] = err
 		for _, user := range users {
 			if user.TwoFactorAuthentication == nil ||
@@ -532,8 +537,10 @@ func (org Organization) AuditMemberPermissions(
 	}
 	wg.Wait()
 
-	output, _ := json.MarshalIndent(permissionSummary, "", " ")
-	_ = ioutil.WriteFile("permissionSummary.json", output, 0644)
+	futils.SerializeFile(
+		permissionSummary,
+		filepath.Join(futils.MetadataDir, "permissions.json"),
+	)
 	for u, perms := range permissionSummary {
 		allPerms := []string{}
 		for perm, repos := range perms {

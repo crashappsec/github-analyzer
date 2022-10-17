@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-
 	"time"
 
 	"github.com/crashappsec/github-security-auditor/pkg/github/types"

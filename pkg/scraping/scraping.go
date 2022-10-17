@@ -9,17 +9,20 @@ import (
 )
 
 func AuditScraping(
-	username, password, otpseed, org string,
-) ([]issue.Issue, error) {
+	username, password, otpseed, org string, enableStats bool,
+) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var issues []issue.Issue
+	execStatus := make(map[issue.IssueID]error, 1)
 
 	client := scrape.NewClient(nil)
 	if err := client.Authenticate(username, password, otpseed); err != nil {
 		log.Logger.Error(err)
-		return issues, nil
+		execStatus[issue.LEAST_PRIV_OAUTH_PERMS_DISABLED] = err
+		return issues, execStatus, nil
 	}
 
 	restrictedAccess, err := client.AppRestrictionsEnabled(org)
+	execStatus[issue.LEAST_PRIV_OAUTH_PERMS_DISABLED] = err
 	if err != nil {
 		log.Logger.Error(err)
 	}
@@ -27,7 +30,12 @@ func AuditScraping(
 		issues = append(issues, issue.ApplicationRestrictionsDisabled(org))
 	}
 
+	if !enableStats {
+		return issues, execStatus, nil
+	}
+
 	apps, err := client.ListOAuthApps(org)
+	execStatus[issue.STATS_OAUTH_PERMS] = err
 	if err != nil {
 		log.Logger.Error(err)
 	}
@@ -36,5 +44,5 @@ func AuditScraping(
 		appinfo = append(appinfo, fmt.Sprintf("%+v", app))
 	}
 	issues = append(issues, issue.OAuthStats(org, appinfo))
-	return issues, nil
+	return issues, execStatus, nil
 }
