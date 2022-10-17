@@ -25,13 +25,13 @@ const (
 )
 
 var AvailableChecks = map[IssueID]string{
-	AUTH_2FA_ORG_DISABLED:              "Organization 2FA disabled",
-	AUTH_2FA_USER_DISABLED:             "Users without 2FA configured",
-	AUTH_2FA_COLLABORATOR_DISABLED:     "Collaborators without 2FA configured",
-	INF_DISC_HTTP_WEBHOOK:              "Insecure webhook payload URL",
-	INF_DISC_SECRET_SCANNING_DISABLED:  "Secret scanning disabled for new repositories",
-	TOOLING_ADVANCED_SECURITY_DISABLED: "Advanced security disabled for new repositories",
-	LEAST_PRIV_OAUTH_PERMS_DISABLED:    "Application restrictions disabled",
+	AUTH_2FA_ORG_DISABLED:              "Organization 2FA settings",
+	AUTH_2FA_USER_DISABLED:             "User 2FA settings",
+	AUTH_2FA_COLLABORATOR_DISABLED:     "Collaborator 2FA settings",
+	INF_DISC_HTTP_WEBHOOK:              "Webhook payload URL settings",
+	INF_DISC_SECRET_SCANNING_DISABLED:  "Secret scanning settings for new repositories",
+	TOOLING_ADVANCED_SECURITY_DISABLED: "Advanced security settings for new repositories",
+	LEAST_PRIV_OAUTH_PERMS_DISABLED:    "Application restriction settings",
 	STATS_USER_PERM:                    "Permissions overview for users",
 	STATS_OAUTH_PERMS:                  "OAuth application summary",
 }
@@ -132,7 +132,7 @@ func OrgAdvancedSecurityDisabled(org string) Issue {
 		Category: category.ToolingAndAutomation,
 		CWEs:     []int{319},
 		Description: fmt.Sprintf(
-			"Advanced security disabled for org %s",
+			"Advanced security disabled for new repositories in organization '%s'",
 			org,
 		),
 		Resources: []resource.Resource{
@@ -154,7 +154,7 @@ func OrgSecretScanningDisabledForNewRepos(org string) Issue {
 		Category: category.InformationDisclosure,
 		CWEs:     []int{319},
 		Description: fmt.Sprintf(
-			"Secret scanning disabled for org %s",
+			"Secret scanning disabled for organization '%s'",
 			org,
 		),
 		Resources: []resource.Resource{
@@ -226,6 +226,6 @@ func OAuthStats(org string, appinfo []string) Issue {
 				Kind: resource.Organization,
 			},
 		},
-		Remediation: "Please ensure the OAuth Apps installed in your org meet your expectations",
+		Remediation: "Please ensure the OAuth Apps installed in your organization meet your expectations",
 	}
 }

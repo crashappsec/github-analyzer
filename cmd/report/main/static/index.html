@@ -1,5 +1,6 @@
 
-
+  
+  
   <!DOCTYPE html>
   <html lang="en">
 
@@ -8,7 +9,6 @@
     <title>
       Report for crashappsec
     </title>
-    <script src="./jquery-1.11.2.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="./bootstrap.css" media="screen" type="text/css">
@@ -31,85 +31,60 @@
         </div>
       </div>
 
-      <div id="publications">
+      <div>
         <div class="paperlist">
           <ul>
-
+          
             <li>
               <div class="paper">
                 <div class="papertitle">
-                <span style="color:#ff3acd; font-weight:bold;">[INFO]</span> OAuth application summary
+                <span style="color:yellow; font-weight:bold;">[MEDIUM]</span> Advanced security settings for new repositories
                 </div>
                 <div class="cwes">
-                  <b>Related CWEs:</b>
+                  <b>Related CWEs:</b> <a href="https://cwe.mitre.org/data/definitions/319.html" target="_blank" rel="noopener noreferrer">319</a>
                 </div>
                 <div class="description">
-                  <b>Description:</b> OAuth apps for 'crashappsec': , , , , {ID:300315 Name:Best Practices Description:Best Practices Production State:2 RequestedBy:}, {ID:467238 Name:Atom GitHub package Description:GitHub for Atom provides access to GitHub data, such as pull request information, inside Atom State:2 RequestedBy:}, {ID:1435944 Name:Usersnap Platform Integration Description: State:2 RequestedBy:}, {ID:1720532 Name:Notion Description:Notion is the all-in-one workspace for notes, wikis, project management and collaboration.
-
- State:2 RequestedBy:}
+                  <b>Description:</b> Advanced security disabled for new repositories in organization 'crashappsec'
                 </div>
                 <div class="remediation">
-                  <b>Remediation:</b> Please ensure the OAuth Apps installed in your org meet your expectations
+                  <b>Remediation:</b> Please see <a href="https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security" target="_blank" rel="noopener noreferrer">here</a> for how to enable secret scanning in your repositories
                 </div>
                 <span class="abstract">
-                  [resources]
+                  [vulnerable resources]
                   <div class="full_abstract">
                   [{crashappsec Organization}]
                   </div>
                 </span>
               </div>
             </li>
-
+          
             <li>
               <div class="paper">
                 <div class="papertitle">
-                <span style="color:yellow; font-weight:bold;">[MEDIUM]</span> Advanced security disabled for new repositories
+                <span style="color:yellow; font-weight:bold;">[MEDIUM]</span> Secret scanning settings for new repositories
                 </div>
                 <div class="cwes">
                   <b>Related CWEs:</b> <a href="https://cwe.mitre.org/data/definitions/319.html" target="_blank" rel="noopener noreferrer">319</a>
                 </div>
                 <div class="description">
-                  <b>Description:</b> Advanced security disabled for org crashappsec
-                </div>
-                <div class="remediation">
-                  <b>Remediation:</b> Pleasee see <a href="https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security" target="_blank" rel="noopener noreferrer">here</a> for how to enable secret scanning in your repositories
-                </div>
-                <span class="abstract">
-                  [resources]
-                  <div class="full_abstract">
-                  [{crashappsec Organization}]
-                  </div>
-                </span>
-              </div>
-            </li>
-
-            <li>
-              <div class="paper">
-                <div class="papertitle">
-                <span style="color:yellow; font-weight:bold;">[MEDIUM]</span> Secret scanning disabled for new repositories
-                </div>
-                <div class="cwes">
-                  <b>Related CWEs:</b> <a href="https://cwe.mitre.org/data/definitions/319.html" target="_blank" rel="noopener noreferrer">319</a>
-                </div>
-                <div class="description">
-                  <b>Description:</b> Secret scanning disabled for org crashappsec
+                  <b>Description:</b> Secret scanning disabled for organization 'crashappsec'
                 </div>
                 <div class="remediation">
                   <b>Remediation:</b> Please see <a href="https://docs.github.com/en/github-ae@latest/code-security/secret-scanning/configuring-secret-scanning-for-your-repositories" target="_blank" rel="noopener noreferrer">here</a> for how to enable secret scanning in your repositories
                 </div>
                 <span class="abstract">
-                  [resources]
+                  [vulnerable resources]
                   <div class="full_abstract">
                   [{crashappsec Organization}]
                   </div>
                 </span>
               </div>
             </li>
-
+          
             <li>
               <div class="paper">
                 <div class="papertitle">
-                <span style="color:#b3ff00; font-weight:bold;">[LOW]</span> Collaborators without 2FA configured
+                <span style="color:#b3ff00; font-weight:bold;">[LOW]</span> Collaborator 2FA settings
                 </div>
                 <div class="cwes">
                   <b>Related CWEs:</b> <a href="https://cwe.mitre.org/data/definitions/308.html" target="_blank" rel="noopener noreferrer">308</a>
@@ -121,22 +96,66 @@
                   <b>Remediation:</b> Please see <a href="https://docs.github.com/en/authentication/securing-your-account-with-two-factor-authentication-2fa/configuring-two-factor-authentication" target="_blank" rel="noopener noreferrer">here</a> for steps on how to configure 2FA for individual accounts
                 </div>
                 <span class="abstract">
-                  [resources]
+                  [vulnerable resources]
                   <div class="full_abstract">
                   [{alexdunphy UserAccount} {medelibero UserAccount}]
                   </div>
                 </span>
               </div>
             </li>
-
+          
           </ul>
         </div>
       </div>
+      
 
 
+    <div class="page-header">
+        <div class="row">
+          <div class="col-lg-12">
+            Checks Passed
+          </div>
+        </div>
+      </div>  
+    <div>
+          <ul>
+          
+            <li>
+              <div class="paper">
+                <div class="papertitle">
+                Application restriction settings <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                </div>
+            </li>
+          
+            <li>
+              <div class="paper">
+                <div class="papertitle">
+                Organization 2FA settings <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                </div>
+            </li>
+          
+            <li>
+              <div class="paper">
+                <div class="papertitle">
+                User 2FA settings <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                </div>
+            </li>
+          
+            <li>
+              <div class="paper">
+                <div class="papertitle">
+                Webhook payload URL settings <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                </div>
+            </li>
+          
+          </ul>
+      </div>
 
-
-
+    <br></br>
+    
+  
+  
+  
 
       <div class="page-header" id="banner">
         <div class="row">
@@ -149,109 +168,110 @@
       <thead>
         <tr>
           <th scope="col">User</th>
-
+          
             <th scope="col">admin</th>
-
+          
             <th scope="col">read</th>
-
+          
             <th scope="col">write</th>
-
+          
         </tr>
       </thead>
       <tbody>
-
+          
             <tr>
               <th scope="row">alexdunphy</th>
-
+              
                 <td></td>
-
+              
                 <td>www-qa-issues</td>
-
+              
                 <td></td>
-
+              
             </tr>
-
+          
             <tr>
               <th scope="row">curphey</th>
-
+              
                 <td>.github, benchmarking, curiosity, demo, demo-playground, docker-clang-tidy, github-security-auditor, go-github, integrations-playground, playground, qlpacks, sami, secrets, util.sh, www-crashoverride-com, www-qa-issues</td>
-
+              
                 <td></td>
-
+              
                 <td></td>
-
+              
             </tr>
-
+          
             <tr>
               <th scope="row">diegomazzoni</th>
-
+              
                 <td></td>
-
+              
                 <td>.github, docker-clang-tidy, github-security-auditor, go-github, qlpacks, sami, secrets, www-crashoverride-com, www-qa-issues</td>
-
+              
                 <td>benchmarking, curiosity, demo, demo-playground, integrations-playground, playground, util.sh</td>
-
+              
             </tr>
-
+          
             <tr>
               <th scope="row">medelibero</th>
-
+              
                 <td></td>
-
+              
                 <td></td>
-
+              
                 <td>github-security-auditor</td>
-
+              
             </tr>
-
+          
             <tr>
               <th scope="row">miki725</th>
-
+              
                 <td>.github, benchmarking, curiosity, demo, demo-playground, docker-clang-tidy, github-security-auditor, go-github, integrations-playground, playground, qlpacks, sami, secrets, util.sh, www-crashoverride-com, www-qa-issues</td>
-
+              
                 <td></td>
-
+              
                 <td></td>
-
+              
             </tr>
-
+          
             <tr>
               <th scope="row">nettrino</th>
-
+              
                 <td>.github, benchmarking, curiosity, demo, demo-playground, docker-clang-tidy, github-security-auditor, go-github, integrations-playground, playground, qlpacks, sami, secrets, util.sh, www-crashoverride-com, www-qa-issues</td>
-
+              
                 <td></td>
-
+              
                 <td></td>
-
+              
             </tr>
-
+          
             <tr>
               <th scope="row">orangematt</th>
-
+              
                 <td>.github, benchmarking, curiosity, demo, demo-playground, docker-clang-tidy, github-security-auditor, go-github, integrations-playground, playground, qlpacks, sami, secrets, util.sh, www-crashoverride-com, www-qa-issues</td>
-
+              
                 <td></td>
-
+              
                 <td></td>
-
+              
             </tr>
-
+          
             <tr>
               <th scope="row">viega</th>
-
+              
                 <td>.github, benchmarking, curiosity, demo, demo-playground, docker-clang-tidy, github-security-auditor, go-github, integrations-playground, playground, qlpacks, sami, secrets, util.sh, www-crashoverride-com, www-qa-issues</td>
-
+              
                 <td></td>
-
+              
                 <td></td>
-
+              
             </tr>
-
+          
       </tbody>
     </table>
-
+  
     </div>
   </body>
 
   </html>
+  

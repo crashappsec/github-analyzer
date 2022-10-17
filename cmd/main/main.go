@@ -12,7 +12,6 @@ import (
 	"github.com/crashappsec/github-security-auditor/pkg/futils"
 	"github.com/crashappsec/github-security-auditor/pkg/github/auditor"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/crashappsec/github-security-auditor/pkg/scraping"
 	"github.com/spf13/cobra"
@@ -69,7 +68,7 @@ func runCmd() {
 			log.Logger.Error(err)
 		}
 		for _, r := range results {
-			if r.Severity == severity.Informational && strings.HasPrefix(string(r.ID), "STATS") {
+			if strings.HasPrefix(string(r.ID), "STATS") {
 				stats = append(stats, r)
 			} else {
 				issues = append(issues, r)

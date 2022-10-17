@@ -15,6 +15,7 @@ import (
 
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
+	"github.com/google/go-github/v47/github"
 	// "path/filepath"
 )
 
@@ -54,6 +55,75 @@ func getSeverity(sev string) string {
 	}
 	return sev
 }
+
+// FIXME check that they are present
+func parseOauthApps(appJson string) (string, error) {
+	var apps []github.OAuthAPP
+
+	jsonFile, err := os.Open(appJson)
+	if err != nil {
+		return "", err
+	}
+	defer jsonFile.Close()
+	jsonBytes, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(jsonBytes, &apps)
+
+	const tmpl = `
+  {{ $apps := .Apps }}
+
+      <div class="page-header">
+        <div class="row">
+          <div class="col-lg-12">
+                User Permission Statistics
+          </div>
+        </div>
+      </div>
+    <table class="table table-hover">
+      <thead>
+        <tr>
+          <th scope="col">User</th>
+          {{range $permissions}}
+            <th scope="col">{{.}}</th>
+          {{end}}
+        </tr>
+      </thead>
+      <tbody>
+          {{range $user := $users}}
+            <tr>
+              <th scope="row">{{$user}}</th>
+              {{range $perm := $permissions}}
+                <td>{{index $summary $user $perm}}</td>
+              {{end}}
+            </tr>
+          {{end}}
+      </tbody>
+    </table>
+  `
+	t, err := template.New("permissionsTable").Parse(tmpl)
+	if err != nil {
+		log.Logger.Error(err)
+		return "", err
+	}
+	type PageData struct {
+		Permissions []string
+		Users       []string
+		Summary     map[string]map[string]string
+	}
+
+	var tmpBuff bytes.Buffer
+	err = t.Execute(&tmpBuff,
+		PageData{
+			Permissions: permissions,
+			Users:       users,
+			Summary:     finalSummary,
+		})
+	if err != nil {
+		log.Logger.Error(err)
+		return "", err
+	}
+	return tmpBuff.String(), nil
+}
+
 func parsePermissions(permJson string) (string, error) {
 	type userRepoPermissions map[string]([]string)
 	var permissionSummary map[string]userRepoPermissions
@@ -105,7 +175,7 @@ func parsePermissions(permJson string) (string, error) {
   {{ $permissions := .Permissions }}
   {{ $summary := .Summary }}
 
-      <div class="page-header" id="banner">
+      <div class="page-header">
         <div class="row">
           <div class="col-lg-12">
                 User Permission Statistics
@@ -162,6 +232,7 @@ func staticHtml(org, permissionStats string) (string, error) {
 
 	const tmpl = `
   {{ $issues := .Issues }}
+  {{ $passed := .ChecksPassed }}
   <!DOCTYPE html>
   <html lang="en">
 
@@ -170,7 +241,6 @@ func staticHtml(org, permissionStats string) (string, error) {
     <title>
       Report for {{.Org}}
     </title>
-    <script src="./jquery-1.11.2.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="./bootstrap.css" media="screen" type="text/css">
@@ -185,7 +255,7 @@ func staticHtml(org, permissionStats string) (string, error) {
            Summary for {{.Org}}
       </div>
 
-      <div class="page-header" id="banner">
+      <div class="page-header">
         <div class="row">
           <div class="col-lg-12">
                 Issues detected
@@ -193,7 +263,7 @@ func staticHtml(org, permissionStats string) (string, error) {
         </div>
       </div>
 
-      <div id="publications">
+      <div>
         <div class="paperlist">
           <ul>
           {{range $issue := $issues}}
@@ -212,7 +282,7 @@ func staticHtml(org, permissionStats string) (string, error) {
                   <b>Remediation:</b> {{$issue.Remediation}}
                 </div>
                 <span class="abstract">
-                  [resources]
+                  [vulnerable resources]
                   <div class="full_abstract">
                   {{$issue.Issue.Resources}}
                   </div>
@@ -223,7 +293,30 @@ func staticHtml(org, permissionStats string) (string, error) {
           </ul>
         </div>
       </div>
+      
 
+
+    <div class="page-header">
+        <div class="row">
+          <div class="col-lg-12">
+            Checks Passed
+          </div>
+        </div>
+      </div>  
+    <div>
+          <ul>
+          {{range $issue := $passed}}
+            <li>
+              <div class="paper">
+                <div class="papertitle">
+                {{$issue}} <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                </div>
+            </li>
+          {{end}}
+          </ul>
+      </div>
+
+    <br></br>
     {{.PermissionStats}}
     </div>
   </body>
@@ -237,20 +330,36 @@ func staticHtml(org, permissionStats string) (string, error) {
 		return "", err
 	}
 
-	var issues []issue.Issue
+	var checks map[issue.IssueID]error
 
 	jsonFile, err := os.Open(
-		"/Users/nettrino/go/src/github.com/crashappsec/github-security-auditor/output/issues/issues.json",
+		"/Users/nettrino/go/src/github.com/crashappsec/github-security-auditor/output/metadata/execStatus.json",
 	)
 	if err != nil {
 		return "", err
 	}
 	defer jsonFile.Close()
 	jsonBytes, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(jsonBytes, &checks)
+
+	var issues []issue.Issue
+
+	jsonFile, err = os.Open(
+		"/Users/nettrino/go/src/github.com/crashappsec/github-security-auditor/output/issues/issues.json",
+	)
+	if err != nil {
+		return "", err
+	}
+	defer jsonFile.Close()
+	jsonBytes, _ = ioutil.ReadAll(jsonFile)
 	json.Unmarshal(jsonBytes, &issues)
 
 	var wrappedIssues []WrappedIssue
 	for _, i := range issues {
+		delete(checks, i.ID)
+		if strings.HasPrefix(string(i.ID), "STATS") {
+			continue
+		}
 		var cweStrings []string
 		for _, cwe := range i.CWEs {
 			cweStrings = append(
@@ -276,7 +385,15 @@ func staticHtml(org, permissionStats string) (string, error) {
 		Org             string
 		PermissionStats template.HTML
 		Issues          []WrappedIssue
-		Stats           []WrappedIssue
+		ChecksPassed    []string
+	}
+
+	var passed []string
+	for ch := range checks {
+		if strings.HasPrefix(string(ch), "STATS") {
+			continue
+		}
+		passed = append(passed, issue.AvailableChecks[ch])
 	}
 
 	var tmpBuff bytes.Buffer
@@ -285,7 +402,7 @@ func staticHtml(org, permissionStats string) (string, error) {
 			Org:             org,
 			PermissionStats: template.HTML(permissionStats),
 			Issues:          wrappedIssues,
-			Stats:           wrappedIssues,
+			ChecksPassed:    passed,
 		})
 	if err != nil {
 		log.Logger.Error(err)
