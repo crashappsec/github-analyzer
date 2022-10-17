@@ -12,6 +12,7 @@ import (
 	"github.com/crashappsec/github-security-auditor/pkg/futils"
 	"github.com/crashappsec/github-security-auditor/pkg/github/auditor"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
+	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/crashappsec/github-security-auditor/pkg/scraping"
 	"github.com/spf13/cobra"
@@ -28,6 +29,7 @@ func main() {
 
 func runCmd() {
 	var issues []issue.Issue
+	var stats []issue.Issue
 	var checkStatuses map[issue.IssueID]error
 
 	futils.Init()
@@ -66,7 +68,13 @@ func runCmd() {
 		if err != nil {
 			log.Logger.Error(err)
 		}
-		issues = append(issues, results...)
+		for _, r := range results {
+			if r.Severity == severity.Informational && strings.HasPrefix(string(r.ID), "STATS") {
+				stats = append(stats, r)
+			} else {
+				issues = append(issues, r)
+			}
+		}
 
 		for id, err := range execStatus {
 			prevError, ok := checkStatuses[id]
@@ -85,8 +93,12 @@ func runCmd() {
 	}
 
 	futils.SerializeFile(
-		checkStatuses,
+		issues,
 		filepath.Join(futils.IssuesDir, "issues.json"),
+	)
+	futils.SerializeFile(
+		stats,
+		filepath.Join(futils.StatsDir, "auditStats.json"),
 	)
 	futils.SerializeFile(
 		checkStatuses,

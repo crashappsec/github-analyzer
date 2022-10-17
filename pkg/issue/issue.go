@@ -142,7 +142,7 @@ func OrgAdvancedSecurityDisabled(org string) Issue {
 			},
 		},
 		Tags:        []tags.Tag{tags.AdvancedSecurity},
-		Remediation: "Pleasee see https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security for how to enable secret scanning in your repositories",
+		Remediation: "Please see https://docs.github.com/en/get-started/learning-about-github/about-github-advanced-security for how to enable secret scanning in your repositories",
 	}
 }
 

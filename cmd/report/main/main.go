@@ -6,16 +6,54 @@ import (
 	"sort"
 
 	// "github.com/crashappsec/github-security-auditor/pkg/futils"
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	// "path/filepath"
 )
 
+type WrappedIssue struct {
+	Issue       issue.Issue
+	SeverityStr template.HTML
+	Description template.HTML
+	Remediation template.HTML
+	CWEs        template.HTML
+}
+
+func normalizeLinks(input string) string {
+	sep := strings.Split(input, " ")
+	for i, s := range sep {
+		if strings.HasPrefix(s, "https://") || strings.HasPrefix(s, "http://") {
+			sep[i] = fmt.Sprintf(
+				"<a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">here</a>",
+				s,
+			)
+		}
+	}
+	return strings.Join(sep, " ")
+}
+
+func getSeverity(sev string) string {
+	switch sev {
+	case "Informational":
+		return "<span style=\"color:#ff3acd; font-weight:bold;\">[INFO]</span>"
+	case "Low":
+		return "<span style=\"color:#b3ff00; font-weight:bold;\">[LOW]</span>"
+	case "Medium":
+		return "<span style=\"color:yellow; font-weight:bold;\">[MEDIUM]</span>"
+	case "High":
+		return "<span style=\"color:#ff3a3a; font-weight:bold;\">[HIGH]</span>"
+	case "Critical":
+		return "<span style=\"color:#af0000; font-weight:bold;\">[CRITICAL]</span>"
+	}
+	return sev
+}
 func parsePermissions(permJson string) (string, error) {
 	type userRepoPermissions map[string]([]string)
 	var permissionSummary map[string]userRepoPermissions
@@ -67,6 +105,13 @@ func parsePermissions(permJson string) (string, error) {
   {{ $permissions := .Permissions }}
   {{ $summary := .Summary }}
 
+      <div class="page-header" id="banner">
+        <div class="row">
+          <div class="col-lg-12">
+                User Permission Statistics
+          </div>
+        </div>
+      </div>
     <table class="table table-hover">
       <thead>
         <tr>
@@ -116,6 +161,7 @@ func parsePermissions(permJson string) (string, error) {
 func staticHtml(org, permissionStats string) (string, error) {
 
 	const tmpl = `
+  {{ $issues := .Issues }}
   <!DOCTYPE html>
   <html lang="en">
 
@@ -135,37 +181,46 @@ func staticHtml(org, permissionStats string) (string, error) {
 
   <body>
     <div class="container">
+      <div class="scantitle">
+           Summary for {{.Org}}
+      </div>
 
       <div class="page-header" id="banner">
         <div class="row">
           <div class="col-lg-12">
-            <h1>
-              <center>
-                Summary for {{.Org}} GitHub Org
-              </center>
-            </h1>
+                Issues detected
           </div>
         </div>
       </div>
 
       <div id="publications">
         <div class="paperlist">
-          <ol>
+          <ul>
+          {{range $issue := $issues}}
             <li>
               <div class="paper">
                 <div class="papertitle">
-                  TODO
+                {{$issue.SeverityStr}} {{$issue.Issue.Name}}
                 </div>
-                TODO2
+                <div class="cwes">
+                  <b>Related CWEs:</b> {{$issue.CWEs}}
+                </div>
+                <div class="description">
+                  <b>Description:</b> {{$issue.Description}}
+                </div>
+                <div class="remediation">
+                  <b>Remediation:</b> {{$issue.Remediation}}
+                </div>
                 <span class="abstract">
-                  [abstract]
+                  [resources]
                   <div class="full_abstract">
-                    contents
+                  {{$issue.Issue.Resources}}
                   </div>
                 </span>
               </div>
             </li>
-          </ol>
+          {{end}}
+          </ul>
         </div>
       </div>
 
@@ -181,9 +236,47 @@ func staticHtml(org, permissionStats string) (string, error) {
 		log.Logger.Error(err)
 		return "", err
 	}
+
+	var issues []issue.Issue
+
+	jsonFile, err := os.Open(
+		"/Users/nettrino/go/src/github.com/crashappsec/github-security-auditor/output/issues/issues.json",
+	)
+	if err != nil {
+		return "", err
+	}
+	defer jsonFile.Close()
+	jsonBytes, _ := ioutil.ReadAll(jsonFile)
+	json.Unmarshal(jsonBytes, &issues)
+
+	var wrappedIssues []WrappedIssue
+	for _, i := range issues {
+		var cweStrings []string
+		for _, cwe := range i.CWEs {
+			cweStrings = append(
+				cweStrings,
+				fmt.Sprintf(
+					"<a href=\"https://cwe.mitre.org/data/definitions/%d.html\" target=\"_blank\" rel=\"noopener noreferrer\">%d</a>",
+					cwe,
+					cwe,
+				),
+			)
+		}
+		wrappedIssues = append(wrappedIssues,
+			WrappedIssue{
+				Issue:       i,
+				SeverityStr: template.HTML(getSeverity(i.Severity.String())),
+				Description: template.HTML(normalizeLinks(i.Description)),
+				Remediation: template.HTML(normalizeLinks(i.Remediation)),
+				CWEs:        template.HTML(strings.Join(cweStrings, ",")),
+			})
+	}
+
 	type PageData struct {
 		Org             string
 		PermissionStats template.HTML
+		Issues          []WrappedIssue
+		Stats           []WrappedIssue
 	}
 
 	var tmpBuff bytes.Buffer
@@ -191,6 +284,8 @@ func staticHtml(org, permissionStats string) (string, error) {
 		PageData{
 			Org:             org,
 			PermissionStats: template.HTML(permissionStats),
+			Issues:          wrappedIssues,
+			Stats:           wrappedIssues,
 		})
 	if err != nil {
 		log.Logger.Error(err)
