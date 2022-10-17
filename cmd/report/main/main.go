@@ -15,9 +15,14 @@ import (
 
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
-	"github.com/google/go-github/v47/github"
+	"github.com/google/go-github/scrape"
 	// "path/filepath"
 )
+
+type WrappedOAuthApp struct {
+	App   scrape.OAuthApp
+	State string
+}
 
 type WrappedIssue struct {
 	Issue       issue.Issue
@@ -56,9 +61,22 @@ func getSeverity(sev string) string {
 	return sev
 }
 
+func getOauthAppState(s int) string {
+	if s == 1 {
+		return "Requested"
+	}
+	if s == 2 {
+		return "Approved"
+	}
+	if s == 3 {
+		return "Denied"
+	}
+	return "Unknown"
+}
+
 // FIXME check that they are present
 func parseOauthApps(appJson string) (string, error) {
-	var apps []github.OAuthAPP
+	var apps []scrape.OAuthApp
 
 	jsonFile, err := os.Open(appJson)
 	if err != nil {
@@ -68,54 +86,64 @@ func parseOauthApps(appJson string) (string, error) {
 	jsonBytes, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(jsonBytes, &apps)
 
+	var wrappedApps []WrappedOAuthApp
+	for _, app := range apps {
+		wrappedApps = append(wrappedApps,
+			WrappedOAuthApp{App: app, State: getOauthAppState(int(app.State))})
+	}
 	const tmpl = `
   {{ $apps := .Apps }}
 
       <div class="page-header">
         <div class="row">
           <div class="col-lg-12">
-                User Permission Statistics
+                OAuth App Statistics
           </div>
         </div>
       </div>
-    <table class="table table-hover">
-      <thead>
-        <tr>
-          <th scope="col">User</th>
-          {{range $permissions}}
-            <th scope="col">{{.}}</th>
+      
+    <div>
+        <div class="paperlist">
+          <ul>
+          {{range $app := $apps}}
+            <li>
+              <div class="paper">
+                <div class="papertitle">
+                  {{$app.App.Name}} (ID: {{$app.App.ID}})
+                </div>
+                {{if $app.App.Description}}
+                <div class="description">
+                  <b>Description:</b> {{$app.App.Description}}
+                </div>
+                {{end}}
+                <div class="state">
+                  <b>Status:</b> {{$app.State}}
+                </div>
+              </div>
+                {{if $app.App.RequestedBy}}
+                <div class="requester">
+                  <b>Requested By:</b> {{$app.App.RequestedBy}}
+                </div>
+                {{end}}
+            </li>
           {{end}}
-        </tr>
-      </thead>
-      <tbody>
-          {{range $user := $users}}
-            <tr>
-              <th scope="row">{{$user}}</th>
-              {{range $perm := $permissions}}
-                <td>{{index $summary $user $perm}}</td>
-              {{end}}
-            </tr>
-          {{end}}
-      </tbody>
-    </table>
+          </ul>
+        </div>
+      </div>
   `
-	t, err := template.New("permissionsTable").Parse(tmpl)
+	t, err := template.New("oauthAppsList").Parse(tmpl)
 	if err != nil {
 		log.Logger.Error(err)
 		return "", err
 	}
 	type PageData struct {
-		Permissions []string
-		Users       []string
-		Summary     map[string]map[string]string
+		Apps []WrappedOAuthApp
 	}
 
 	var tmpBuff bytes.Buffer
 	err = t.Execute(&tmpBuff,
 		PageData{
-			Permissions: permissions,
-			Users:       users,
-			Summary:     finalSummary,
+			Apps: wrappedApps,
 		})
 	if err != nil {
 		log.Logger.Error(err)
@@ -228,7 +256,7 @@ func parsePermissions(permJson string) (string, error) {
 	return tmpBuff.String(), nil
 }
 
-func staticHtml(org, permissionStats string) (string, error) {
+func staticHtml(org, permissionStats, appInfo string) (string, error) {
 
 	const tmpl = `
   {{ $issues := .Issues }}
@@ -317,6 +345,7 @@ func staticHtml(org, permissionStats string) (string, error) {
       </div>
 
     <br></br>
+    {{.AppStats}}
     {{.PermissionStats}}
     </div>
   </body>
@@ -384,6 +413,7 @@ func staticHtml(org, permissionStats string) (string, error) {
 	type PageData struct {
 		Org             string
 		PermissionStats template.HTML
+		AppStats        template.HTML
 		Issues          []WrappedIssue
 		ChecksPassed    []string
 	}
@@ -401,6 +431,7 @@ func staticHtml(org, permissionStats string) (string, error) {
 		PageData{
 			Org:             org,
 			PermissionStats: template.HTML(permissionStats),
+			AppStats:        template.HTML(appInfo),
 			Issues:          wrappedIssues,
 			ChecksPassed:    passed,
 		})
@@ -419,11 +450,17 @@ func main() {
 	if err != nil {
 		log.Logger.Error(err)
 	}
+	appInfo, err := parseOauthApps(
+		"/Users/nettrino/go/src/github.com/crashappsec/github-security-auditor/output/metadata/oauthApps.json",
+	)
+	if err != nil {
+		log.Logger.Error(err)
+	}
 	f, err := os.Create(
 		"/Users/nettrino/go/src/github.com/crashappsec/github-security-auditor/cmd/report/main/static/index.html",
 	)
 	defer f.Close()
-	html, err := staticHtml(org, perms)
+	html, err := staticHtml(org, perms, appInfo)
 	if err != nil {
 		log.Logger.Error(err)
 	}
