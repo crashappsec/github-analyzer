@@ -8,9 +8,9 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var Logger *zap.SugaredLogger = initLogger()
+var Logger *zap.SugaredLogger = initLogger(false)
 
-func initLogger() *zap.SugaredLogger {
+func initLogger(enableStackTrace bool) *zap.SugaredLogger {
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder
 
@@ -39,6 +39,9 @@ func initLogger() *zap.SugaredLogger {
 		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
 	)
 
-	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)).
-		Sugar()
+	if enableStackTrace {
+		return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel)).
+			Sugar()
+	}
+	return zap.New(core, zap.AddCaller()).Sugar()
 }

@@ -76,19 +76,24 @@ func runCmd() {
 			}
 		}
 
-		for id, err := range execStatus {
-			prevError, ok := checkStatuses[id]
-			if !ok {
-				// this is the first time we see this check
-				checkStatuses[id] = err
-				continue
-			}
-			// if we have additional errors just merge them for now
-			if err != nil {
-				if prevError != nil {
-					checkStatuses[id] = errors.New(err.Error() + prevError.Error())
+		// update the map of what has executed if we have info from scraping
+		if len(checkStatuses) > 0 {
+			for id, err := range execStatus {
+				prevError, ok := checkStatuses[id]
+				if !ok {
+					// this is the first time we see this check
+					checkStatuses[id] = err
+					continue
+				}
+				// if we have additional errors just merge them for now
+				if err != nil {
+					if prevError != nil {
+						checkStatuses[id] = errors.New(err.Error() + prevError.Error())
+					}
 				}
 			}
+		} else {
+			checkStatuses = execStatus
 		}
 	}
 
@@ -127,7 +132,7 @@ func NewRootCommand() *cobra.Command {
 			runCmd()
 		},
 	}
-	// TODO allow auditing a repo only
+	// TODO allow auditing a repo/user account only
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.Organization, "organization", "", "", "The organization we want to check the security on")
 	rootCmd.MarkFlagRequired("organization")
@@ -154,7 +159,7 @@ func NewRootCommand() *cobra.Command {
 		StringVarP(&config.ViperEnv.OtpSeed, "otpSeed", "", "", "One Time Password (required if enableScraping is set)")
 
 	rootCmd.Flags().
-		IntVarP(&config.ViperEnv.Port, "port", "", 3000, "Port for local http server used to display HTML with summary of findings")
+		IntVarP(&config.ViperEnv.Port, "port", "", 3000, "Port for local http server used to display HTML with summary of findings (if you are using docker you will need to override the default port appropriately)")
 	return rootCmd
 }
 

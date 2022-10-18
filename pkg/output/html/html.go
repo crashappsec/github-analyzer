@@ -94,7 +94,7 @@ func parseStats(statsJson string) (string, error) {
   <div class="page-header">
     <div class="row">
       <div class="col-lg-12">
-        {{$stats.CoreStats.Login}} Org Info
+        Org Info
       </div>
     </div>
   </div>
@@ -105,11 +105,38 @@ func parseStats(statsJson string) (string, error) {
         <li><b>Name:</b> {{$stats.CoreStats.Name}}</li>
         <li><b>ID:</b> {{$stats.CoreStats.ID}}</li>
          <li> <b>Organization is verified:</b> {{$stats.CoreStats.IsVerified}}</li>
+        <li> <b>Web commit Signoff Required:</b> {{$stats.CoreStats.WebCommitSignoffRequired}}</li>
          <li> <b>Number of public repos:</b> {{$stats.CoreStats.PublicRepos}}</li>
          <li> <b>Number of private repos:</b> {{$stats.CoreStats.TotalPrivateRepos}}</li>
          <li> <b>Number of public gists:</b> {{$stats.CoreStats.PublicGists}}</li>
          <li> <b>Number of private gists:</b> {{$stats.CoreStats.PrivateGists}}</li>
          <li> <b>Number of collaborators:</b> {{$stats.CoreStats.Collaborators}}</li>
+         <li> <b>Number of webhooks:</b> {{$.TotalWebhooks}}</li>
+         <li> <b>Number of installations:</b> {{$.TotalInstallations}}</li>
+         <li> <b>Number of runners:</b> {{$.TotalRunners}}</li>
+         <li> <b>Members can create public repositories:</b> {{$stats.CoreStats.MembersCanCreatePublicRepos}}</li>
+         <li> <b>Members can create private repositories:</b> {{$stats.CoreStats.MembersCanCreatePrivateRepos}}</li>
+         <li> <b>Members can create internal repositories:</b> {{$stats.CoreStats.MembersCanCreateInternalRepos}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div class="row">
+      <div class="col-lg-12">
+        Dependency and Secret Scanning
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="shortlist">
+      <ul>
+        <li> <b>Advanced Security alerts enabled for new repos:</b> {{$stats.CoreStats.AdvancedSecurityEnabledForNewRepos}}</li>
+        <li> <b>Dependabot alerts enabled for new repos:</b> {{$stats.CoreStats.DependabotAlertsEnabledForNewRepos}}</li>
+        <li> <b>Dependabot security updates enabled for new repos:</b> {{$stats.CoreStats.DependabotSecurityUpdatesEnabledForNewRepos}}</li>
+        <li> <b>Dependency graph enabled for new repos:</b> {{$stats.CoreStats.DependencyGraphEnabledForNewRepos}}</li>
+        <li> <b>Secret scanning enabled for new repos:</b> {{$stats.CoreStats.SecretScanningEnabledForNewRepos}}</li>
+        <li> <b>Secret scanning push protection enabled for new repos:</b> {{$stats.CoreStats.SecretScanningPushProtectionEnabledForNewRepos}}</li>
       </ul>
     </div>
   </div>
@@ -120,13 +147,19 @@ func parseStats(statsJson string) (string, error) {
 		return "", err
 	}
 	type PageData struct {
-		Stats org.OrgStats
+		Stats              org.OrgStats
+		TotalRunners       int
+		TotalInstallations int
+		TotalWebhooks      int
 	}
 
 	var tmpBuff bytes.Buffer
 	err = t.Execute(&tmpBuff,
 		PageData{
-			Stats: stats,
+			Stats:              stats,
+			TotalRunners:       len(stats.Runners),
+			TotalWebhooks:      len(stats.Webhooks),
+			TotalInstallations: len(stats.Installations),
 		})
 	if err != nil {
 		log.Logger.Error(err)
