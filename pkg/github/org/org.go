@@ -79,7 +79,7 @@ func NewOrganization(
 
 // GetWebhook returns the webhooks for a given org. Upon first call,
 // it lazily updates the Organization with the webhook information
-func (org Organization) GetWebhooks(
+func (org *Organization) GetWebhooks(
 	ctx context.Context) (map[types.WebhookID]types.Webhook, error) {
 	if len(org.Webhooks) > 0 {
 		return org.Webhooks, nil
@@ -107,7 +107,7 @@ func (org Organization) GetWebhooks(
 	return hookMap, err
 }
 
-func (org Organization) GetInstalls(
+func (org *Organization) GetInstalls(
 	ctx context.Context) (map[types.InstallID]types.Install, error) {
 	if len(org.Installations) > 0 {
 		return org.Installations, nil
@@ -127,6 +127,9 @@ func (org Organization) GetInstalls(
 		},
 		utils.InstallsAggregator,
 	)
+	if err != nil {
+		log.Logger.Error(err)
+	}
 
 	installMap := make(map[types.InstallID]types.Install, len(installs))
 	for _, i := range installs {
@@ -136,7 +139,7 @@ func (org Organization) GetInstalls(
 	return installMap, err
 }
 
-func (org Organization) GetActionRunners(
+func (org *Organization) GetActionRunners(
 	ctx context.Context) (map[types.RunnerID]types.Runner, error) {
 	if len(org.Runners) > 0 {
 		return org.Runners, nil
@@ -352,7 +355,7 @@ func (org *Organization) GetRepositories(ctx context.Context) (
 	return repositories, nil
 }
 
-func (org Organization) Audit2FA(
+func (org *Organization) Audit2FA(
 	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 
 	var issues []issue.Issue
@@ -427,7 +430,7 @@ func (org Organization) Audit2FA(
 	return issues, execStatus, nil
 }
 
-func (org Organization) AuditWebhooks(
+func (org *Organization) AuditWebhooks(
 	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 
 	execStatus := make(map[issue.IssueID]error, 1)
@@ -458,7 +461,7 @@ func (org Organization) AuditWebhooks(
 	return issues, execStatus, nil
 }
 
-func (org Organization) AuditCoreStats(
+func (org *Organization) AuditCoreStats(
 	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var issues []issue.Issue
 	execStatus := make(map[issue.IssueID]error, 2)
@@ -483,7 +486,7 @@ func (org Organization) AuditCoreStats(
 
 // Summarize provides generic statistics for a given org and serializes them
 // to disc
-func (org Organization) Summarize() *types.OrgCoreStats {
+func (org *Organization) Summarize() *types.OrgCoreStats {
 	var collaborators []string
 	for u := range org.Collaborators {
 		collaborators = append(collaborators, u)
@@ -501,7 +504,7 @@ func (org Organization) Summarize() *types.OrgCoreStats {
 	return org.CoreStats
 }
 
-func (org Organization) AuditMemberPermissions(
+func (org *Organization) AuditMemberPermissions(
 	ctx context.Context) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var issues []issue.Issue
 	execStatus := make(map[issue.IssueID]error, 1)
@@ -581,7 +584,7 @@ func (org Organization) AuditMemberPermissions(
 	return issues, execStatus, nil
 }
 
-func (org Organization) Audit(
+func (org *Organization) Audit(
 	ctx context.Context,
 	enableStats bool,
 ) ([]issue.Issue, map[issue.IssueID]error, error) {
@@ -595,6 +598,8 @@ func (org Organization) Audit(
 	}
 
 	if enableStats {
+		org.GetInstalls(ctx)
+		org.GetActionRunners(ctx)
 		auditHooks = append(auditHooks, org.AuditMemberPermissions)
 	}
 	for _, hook := range auditHooks {
