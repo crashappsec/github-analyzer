@@ -4,25 +4,41 @@
 
 # Github Security Auditor
 
-Audits a GitHub organization for potential security issues. The tool is currently in pre-alpha stage and only supports limited functionality, however we will be actively adding checks in the upcoming months, and welcome contributions from the community!
+Audits a GitHub organization for potential security issues. The tool is
+currently in pre-alpha stage and only supports limited functionality, however
+we will be actively adding checks in the upcoming months, and welcome
+contributions from the community!
 
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-### Available Checks
+- [Available Checks](#available-checks)
+- [Sample Output](#sample-output)
+- [How to run](#how-to-run)
+  - [Running locally](#running-locally)
+  - [Running using Docker](#running-using-docker)
+- [Permissions](#permissions)
+- [Credits](#credits)
 
-|                       Name                      |               Category               |    Severity   | Resource Affected |
-|:-----------------------------------------------:|:------------------------------------:|:-------------:|:-----------------:|
-| Application restrictions disabled               |            Least Privilege           |     High      |    Organization   |
-| Insecure Webhook payload URL                    |        Information Disclosure        |     High      |      Webhook      |
-| Advanced security disabled for new repositories | Tooling and Automation Configuration |    Medium     |    Organization   |
-| Secret scanning disabled for new repositories   | Tooling and Automation Configuration |    Medium     |    Organization   |
-| Organization 2FA disabled                       |            Authentication            |    Medium     |    Organization   |
-| Users without 2FA configured                    |            Authentication            |      Low      |    User Account   |
-| Permissions overview for users                  |            Least Privilege           | Informational |    User Account   |
-| OAuth application summary                       |            Least Privilege           | Informational |    Organization   |
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
+## Available Checks
 
-### Sample Output
-For each issue identified, a JSON with associated information will be generated. A sample output snippet is as follows:
+|                      Name                       |               Category               |   Severity    | Resource Affected |
+| :---------------------------------------------: | :----------------------------------: | :-----------: | :---------------: |
+|        Application restrictions disabled        |           Least Privilege            |     High      |   Organization    |
+|          Insecure Webhook payload URL           |        Information Disclosure        |     High      |      Webhook      |
+| Advanced security disabled for new repositories | Tooling and Automation Configuration |    Medium     |   Organization    |
+|  Secret scanning disabled for new repositories  | Tooling and Automation Configuration |    Medium     |   Organization    |
+|            Organization 2FA disabled            |            Authentication            |    Medium     |   Organization    |
+|          Users without 2FA configured           |            Authentication            |      Low      |   User Account    |
+|         Permissions overview for users          |           Least Privilege            | Informational |   User Account    |
+|            OAuth application summary            |           Least Privilege            | Informational |   Organization    |
+
+## Sample Output
+
+For each issue identified, a JSON with associated information will be
+generated. A sample output snippet is as follows:
 
 ```
 ...
@@ -74,32 +90,46 @@ For each issue identified, a JSON with associated information will be generated.
 
 You can see available options via the `--help` flag.
 
-#### Running locally
-* From the root of the directory run `make`
-* Run `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
+### Running locally
 
-#### Running using Docker
+- From the root of the directory run `make`
+- Run `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
+
+### Running using Docker
 
 Run `docker compose run auditor --organization crahsappsec`
 
-### Permissions
+## Permissions
 
-For **API-based based checks**, you need to pass in a personal access token (PAT) with the appropriate permissions. Example use:
+For **API-based based checks**, you need to pass in GitHub Token
+(either personal access token (PAT) or token derived from GitHub app installation)
+with the appropriate permissions. Example use:
 
 `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
 
-See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#creating-a-token) for instructions on setting up a token to be used with the auditor.
+See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#creating-a-token)
+for instructions on setting up a token to be used with the auditor.
 
-
-For **experimental scraping-based checks**, you need to pass in your username and password, as well your two factor authentication one-time-password, as needed. Example usage:
+For **experimental scraping-based checks**, you need to pass in your username
+and password, as well your two factor authentication one-time-password, as
+needed. Example usage:
 
 ```shell
-./bin/auditor --organization crashappsec --tokenName GIT_ADMIN --enableScraping --enableStats --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED"
-
+./bin/auditor \
+    --organization crashappsec \
+    --tokenName GIT_ADMIN \
+    --enableStats \
+    --enableScraping \
+    --username $GH_SECURITY_AUDITOR_USERNAME \
+    --password "$GH_SECURITY_AUDITOR_PASSWORD" \
+    --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED"
 ```
-See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#setting-up-2fa-experimental) for instructions on setting up a token to be used with the auditor.
 
+See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#setting-up-2fa-experimental)
+for instructions on setting up a token to be used with the auditor.
 
-# Credits
+## Credits
 
-Project was originally ported from Mike de Libero's [auditor](https://github.com/CodeReconCo/githubsecurityauditor) with the author's permission.
+Project was originally ported from Mike de Libero's
+[auditor](https://github.com/CodeReconCo/githubsecurityauditor)
+with the author's permission.
