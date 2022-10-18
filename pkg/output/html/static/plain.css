@@ -24,7 +24,7 @@
   height: 40px;
   border-radius: 50%;
   stroke-width: 5;
-  stroke: green;
+  stroke: #a2e504;
   stroke-miterlimit: 10;
   stroke-dashoffset: 0;
   margin: 0 0 0 -0.5em;
@@ -34,7 +34,7 @@
   max-width: 1050px;
 }
 
-.paperlist {
+.issuelist {
     text-align: justify;
     text-justify: inter-word;
     list-style: none;
@@ -42,19 +42,19 @@
     max-width: 1000px;
 }
 
-.paperlist li {
+.issuelist li {
    padding-bottom: 20px;
 }
 
-.paperlist h2 {
+.issuelist h2 {
     border-bottom: 1px solid #eeeeee;
 }
 
-.paper {
+.issue {
     text-align: justify;
 }
 
-.papertitle {
+.issuetitle {
   color: #a2e504;
 }
 .full_abstract {

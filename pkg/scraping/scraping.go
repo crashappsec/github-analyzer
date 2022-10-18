@@ -3,11 +3,12 @@ package scraping
 import (
 	"fmt"
 
+	"path/filepath"
+
 	"github.com/crashappsec/github-security-auditor/pkg/futils"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/scrape"
-	"path/filepath"
 )
 
 func AuditScraping(
