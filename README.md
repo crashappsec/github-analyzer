@@ -4,7 +4,7 @@
 
 # Github Security Auditor
 
-Audits a GitHub organization for potential security issues.
+Audits a GitHub organization for potential security issues. The tool is currently in pre-alpha stage and only supports limited functionality, however we will be actively adding checks in the upcoming months, and welcome contributions from the community!
 
 
 ### Available Checks
@@ -94,7 +94,7 @@ See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setti
 For **experimental scraping-based checks**, you need to pass in your username and password, as well your two factor authentication one-time-password, as needed. Example usage:
 
 ```shell
-./bin/auditor --organization crashappsec --tokenName GIT_ADMIN --enableScraping --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otp `2fa github`
+./bin/auditor --organization crashappsec --tokenName GIT_ADMIN --enableScraping --enableStats --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED"
 
 ```
 See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#setting-up-2fa-experimental) for instructions on setting up a token to be used with the auditor.
