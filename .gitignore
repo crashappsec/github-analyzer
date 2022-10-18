@@ -20,6 +20,7 @@ _obj
 _test
 _testmain.go
 tags
+wiki
 
 /VERSION.cache
 bin/
