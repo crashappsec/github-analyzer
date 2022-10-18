@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/crashappsec/github-security-auditor/pkg/github/org"
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/scrape"
@@ -74,14 +75,74 @@ func getOauthAppState(s int) string {
 	return "Unknown"
 }
 
+func parseStats(statsJson string) (string, error) {
+	var stats org.OrgStats
+
+	jsonFile, err := os.Open(statsJson)
+	defer jsonFile.Close()
+	if err != nil {
+		return "", err
+	}
+	jsonBytes, err := ioutil.ReadAll(jsonFile)
+	if err != nil {
+		return "", err
+	}
+	json.Unmarshal(jsonBytes, &stats)
+
+	const tmpl = `
+  {{ $stats := .Stats }}
+  <div class="page-header">
+    <div class="row">
+      <div class="col-lg-12">
+        {{$stats.CoreStats.Login}} Org Info
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="shortlist">
+      <ul>
+        <li><b>Name:</b> {{$stats.CoreStats.Name}}</li>
+        <li><b>ID:</b> {{$stats.CoreStats.ID}}</li>
+         <li> <b>Organization is verified:</b> {{$stats.CoreStats.IsVerified}}</li>
+         <li> <b>Number of public repos:</b> {{$stats.CoreStats.PublicRepos}}</li>
+         <li> <b>Number of private repos:</b> {{$stats.CoreStats.TotalPrivateRepos}}</li>
+         <li> <b>Number of public gists:</b> {{$stats.CoreStats.PublicGists}}</li>
+         <li> <b>Number of private gists:</b> {{$stats.CoreStats.PrivateGists}}</li>
+         <li> <b>Number of collaborators:</b> {{$stats.CoreStats.Collaborators}}</li>
+      </ul>
+    </div>
+  </div>
+  `
+	t, err := template.New("stats").Parse(tmpl)
+	if err != nil {
+		log.Logger.Error(err)
+		return "", err
+	}
+	type PageData struct {
+		Stats org.OrgStats
+	}
+
+	var tmpBuff bytes.Buffer
+	err = t.Execute(&tmpBuff,
+		PageData{
+			Stats: stats,
+		})
+	if err != nil {
+		log.Logger.Error(err)
+		return "", err
+	}
+	return tmpBuff.String(), nil
+}
+
 func parseOauthApps(appJson string) (string, error) {
 	var apps []scrape.OAuthApp
 
 	jsonFile, err := os.Open(appJson)
+	defer jsonFile.Close()
 	if err != nil {
 		return "", err
 	}
-	defer jsonFile.Close()
 	jsonBytes, err := ioutil.ReadAll(jsonFile)
 	if err != nil {
 		return "", err
@@ -158,10 +219,10 @@ func parsePermissions(permJson string) (string, error) {
 	var permissionSummary map[string]userRepoPermissions
 
 	jsonFile, err := os.Open(permJson)
+	defer jsonFile.Close()
 	if err != nil {
 		return "", err
 	}
-	defer jsonFile.Close()
 	jsonBytes, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(jsonBytes, &permissionSummary)
 
@@ -412,7 +473,9 @@ func parseIssues(execStatusPath, issuesPath string) (string, error) {
 	return tmpBuff.String(), nil
 }
 
-func staticHtml(org, issues, permissionStats, appInfo string) (string, error) {
+func staticHtml(
+	org, stats, issues, permissionStats, appInfo string,
+) (string, error) {
 
 	const tmpl = `
   <!DOCTYPE html>
@@ -436,9 +499,20 @@ func staticHtml(org, issues, permissionStats, appInfo string) (string, error) {
     <div class="scantitle">
       Summary for {{.Org}}
     </div>
+
     {{.IssueStats}}
-    {{.AppStats}}
-    {{.PermissionStats}}
+
+    {{if .HasNonIssueStats }}
+      <div class="sectiontitle">
+        {{.Org}} Misc Stats
+      </div>
+
+      {{.OrgStats}}
+
+      {{.AppStats}}
+
+      {{.PermissionStats}}
+    {{end}}
   </div>
   </body>
 
@@ -452,19 +526,23 @@ func staticHtml(org, issues, permissionStats, appInfo string) (string, error) {
 	}
 
 	type PageData struct {
-		Org             string
-		IssueStats      template.HTML
-		AppStats        template.HTML
-		PermissionStats template.HTML
+		Org              string
+		IssueStats       template.HTML
+		HasNonIssueStats bool
+		OrgStats         template.HTML
+		AppStats         template.HTML
+		PermissionStats  template.HTML
 	}
 
 	var tmpBuff bytes.Buffer
 	err = t.Execute(&tmpBuff,
 		PageData{
-			Org:             org,
-			IssueStats:      template.HTML(issues),
-			PermissionStats: template.HTML(permissionStats),
-			AppStats:        template.HTML(appInfo),
+			Org:              org,
+			HasNonIssueStats: (stats != "" || permissionStats != "" || appInfo != ""),
+			OrgStats:         template.HTML(stats),
+			IssueStats:       template.HTML(issues),
+			PermissionStats:  template.HTML(permissionStats),
+			AppStats:         template.HTML(appInfo),
 		})
 	if err != nil {
 		log.Logger.Error(err)
@@ -474,18 +552,25 @@ func staticHtml(org, issues, permissionStats, appInfo string) (string, error) {
 }
 
 func Serve(
-	org, permissionsPath, oauthAppPath, execStatusPath, issuesPath string,
+	org, orgStatsPath, permissionsPath, oauthAppPath, execStatusPath, issuesPath string,
 	port int,
 ) {
 	perms, err := parsePermissions(permissionsPath)
 	if err != nil {
 		log.Logger.Error(err)
 	}
+
 	appInfo, err := parseOauthApps(oauthAppPath)
 	if err != nil {
 		log.Logger.Error(err)
 	}
+
 	issues, err := parseIssues(execStatusPath, issuesPath)
+	if err != nil {
+		log.Logger.Error(err)
+	}
+
+	stats, err := parseStats(orgStatsPath)
 	if err != nil {
 		log.Logger.Error(err)
 	}
@@ -494,7 +579,7 @@ func Serve(
 	f, err := os.Create(abs)
 	defer f.Close()
 
-	html, err := staticHtml(org, issues, perms, appInfo)
+	html, err := staticHtml(org, stats, issues, perms, appInfo)
 	if err != nil {
 		log.Logger.Error(err)
 	}
@@ -505,5 +590,11 @@ func Serve(
 	}
 	dirPath, _ := filepath.Abs("./pkg/output/html/static")
 	http.Handle("/", http.FileServer(http.Dir(dirPath)))
+
+	log.Logger.Infoln(
+		"See the output/ directory for raw JSON files with analysis metadata",
+	)
+	log.Logger.Infof("Server with HTML summary started at localhost:%d\n", port)
+
 	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 }

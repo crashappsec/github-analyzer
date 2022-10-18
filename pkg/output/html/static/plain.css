@@ -19,6 +19,17 @@
   text-transform: uppercase;
 }
 
+.sectiontitle {
+  color: #fff;
+  font-size: 25px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1;
+  margin: 2em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
 .checkmark {
   width: 40px;
   height: 40px;
@@ -34,6 +45,7 @@
   max-width: 1050px;
 }
 
+.shortlist
 .issuelist {
     text-align: justify;
     text-justify: inter-word;
