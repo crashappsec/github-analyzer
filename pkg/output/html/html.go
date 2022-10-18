@@ -94,7 +94,7 @@ func parseStats(statsJson string) (string, error) {
   <div class="page-header">
     <div class="row">
       <div class="col-lg-12">
-        {{$stats.CoreStats.Login}} Org Info
+        Org Info
       </div>
     </div>
   </div>
@@ -124,7 +124,7 @@ func parseStats(statsJson string) (string, error) {
   <div class="page-header">
     <div class="row">
       <div class="col-lg-12">
-        {{$stats.CoreStats.Login}} Dependency and Secret Scanning
+        Dependency and Secret Scanning
       </div>
     </div>
   </div>
