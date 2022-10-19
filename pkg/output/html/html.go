@@ -328,7 +328,7 @@ func Serve(
 	})
 
 	log.Logger.Infof(
-		"Server with HTML summary starting at localhost:%d\n",
+		"Server with HTML summary starting at 0.0.0.0:%d\n",
 		port,
 	)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)

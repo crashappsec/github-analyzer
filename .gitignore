@@ -25,6 +25,7 @@ _test
 _testmain.go
 tags
 wiki
+*.envrc*
 
 /VERSION.cache
 bin/

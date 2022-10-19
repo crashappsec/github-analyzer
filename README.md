@@ -95,25 +95,46 @@ You can see available options via the `--help` flag.
 
 ### Running locally
 
-- Run `go install -v github.com/crashappsec/github-analyzer/cmd/github-analyzer@latest`
-- Run `$GOPATH/bin/github-analyzer --organization crashappsec --token "$GIT_ADMIN" --enableScraping --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED" --enableStats`
+- Install with:
+  ```sh
+  go install -v github.com/crashappsec/github-analyzer/cmd/github-analyzer@latest
+  ```
+- Run with:
+  ```sh
+  $GOPATH/bin/github-analyzer \
+    --organization crashappsec \
+    --token "$GH_SECURITY_AUDITOR_TOKEN" \
+    --enableStats
+  ```
 
 ### Running using Docker
 
-- Build the container using `docker compose build --no-cache`
+- Build the container using:
+  ```sh
+  docker compose build --no-cache
+  ```
 - Run
-
-```sh
-docker run -v`pwd`:/tmp -p3000:3000 github-analyzer-co-github-analyzer --organization crashappsec --output /tmp/output --token "$GIT_ADMIN" --enableStats
-```
+  ```sh
+  docker compose run \
+      --rm \
+      co-github-analyzer \
+          --organization crashappsec \
+          --output output \
+          --token "$GH_SECURITY_AUDITOR_TOKEN" \
+          --enableStats
+  ```
 
 ## Permissions
 
 For **API-based based checks**, you need to pass in GitHub Token
 (either personal access token (PAT) or token derived from GitHub app installation)
-with the appropriate permissions. Example use:
+with the appropriate permissions. Example usage:
 
-`./bin/github-analyzer --organization crashappsec --token "$GIT_ADMIN"`
+```sh
+github-analyzer \
+    --organization crashappsec \
+    --token "$GH_SECURITY_AUDITOR_TOKEN"
+```
 
 See [our wiki](https://github.com/crashappsec/github-analyzer/wiki/Setting-up-GitHub#creating-a-token)
 for instructions on setting up a token to be used with the github-analyzer.
@@ -123,9 +144,9 @@ and password, as well your two factor authentication one-time-password, as
 needed. Example usage:
 
 ```shell
-./bin/github-analyzer \
+github-analyzer \
     --organization crashappsec \
-    --token "$GIT_ADMIN" \
+    --token "$GH_SECURITY_AUDITOR_TOKEN" \
     --enableStats \
     --enableScraping \
     --username "$GH_SECURITY_AUDITOR_USERNAME" \

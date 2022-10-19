@@ -89,6 +89,11 @@ func (org *Organization) GetWebhooks(
 		return org.Webhooks, nil
 	}
 
+	log.Logger.Debugf(
+		"Fetching webhooks for %s",
+		*org.info.Login,
+	)
+
 	opt := &github.ListOptions{PerPage: org.paginationSize}
 	hooks, err := utils.GetPaginatedResult(
 		ctx,
@@ -116,6 +121,11 @@ func (org *Organization) GetInstalls(
 	if len(org.Installations) > 0 {
 		return org.Installations, nil
 	}
+
+	log.Logger.Debugf(
+		"Fetching app installs for %s",
+		*org.info.Login,
+	)
 
 	opt := &github.ListOptions{PerPage: org.paginationSize}
 	installs, err := utils.GetPaginatedResult(
@@ -148,6 +158,11 @@ func (org *Organization) GetActionRunners(
 	if len(org.Runners) > 0 {
 		return org.Runners, nil
 	}
+
+	log.Logger.Debugf(
+		"Fetching action runners for %s",
+		*org.info.Login,
+	)
 
 	opt := &github.ListOptions{PerPage: org.paginationSize}
 	runners, err := utils.GetPaginatedResult(

@@ -152,7 +152,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Token, "token", "", "", "The github token for API authentication")
+		StringVarP(&config.ViperEnv.Token, "token", "", "", fmt.Sprintf("The github token for API authentication (default is $%s_TOKEN)", config.ViperEnvPrefix))
 
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableStats, "enableStats", "", false, "Enable statistic-only reports (might be slow due to throttling limits)")
@@ -160,11 +160,11 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "Enable experimental checks that rely on screen scraping")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Username, "username", "u", "", "Username (required if enableScraping is set)")
+		StringVarP(&config.ViperEnv.Username, "username", "u", "", fmt.Sprintf("Username (required if enableScraping is set) (default is $%s_USERNAME)", config.ViperEnvPrefix))
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Password, "password", "p", "", "Password (required if enableScraping is set)")
+		StringVarP(&config.ViperEnv.Password, "password", "p", "", fmt.Sprintf("Password (required if enableScraping is set) (default is $%s_PASSWORD)", config.ViperEnvPrefix))
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.OtpSeed, "otpSeed", "", "", "One Time Password (required if enableScraping is set)")
+		StringVarP(&config.ViperEnv.OtpSeed, "otpSeed", "", "", fmt.Sprintf("One Time Password (required if enableScraping is set) (default is $%s_OTP_SEED)", config.ViperEnvPrefix))
 
 	rootCmd.Flags().
 		IntVarP(&config.ViperEnv.Port, "port", "", 3000, "Port for local http server used to display HTML with summary of findings (if you are using docker you will need to override the default port appropriately)")
