@@ -7,7 +7,11 @@
 Audits a GitHub organization for potential security issues. The tool is
 currently in pre-alpha stage and only supports limited functionality, however
 we will be actively adding checks in the upcoming months, and welcome
-contributions from the community!
+feature requests or contributions! Once the analysis is complete, a static HTML
+with the summary of the results is rendered in localhost:3000 as shown below:
+
+![gh-analyzer](https://user-images.githubusercontent.com/4614044/196647323-8138c053-644c-42a7-86f2-d94a7ce5e295.gif)
+
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
