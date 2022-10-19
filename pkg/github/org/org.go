@@ -601,9 +601,10 @@ func (org *Organization) Audit(
 		org.Audit2FA,
 	}
 
+	org.GetInstalls(ctx)
+	org.GetActionRunners(ctx)
+
 	if enableStats {
-		org.GetInstalls(ctx)
-		org.GetActionRunners(ctx)
 		auditHooks = append(auditHooks, org.AuditMemberPermissions)
 	}
 	for _, hook := range auditHooks {

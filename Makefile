@@ -1,7 +1,7 @@
 .PHONY: all
 all: ## compile auditor
 	mkdir -p bin
-	go build -o bin/auditor cmd/main/main.go
+	go build -o bin/github-analyzer cmd/github-analyzer/main.go
 
 .PHONY: lint
 lint: ## lint everything with pre-commit
@@ -10,7 +10,7 @@ lint: ## lint everything with pre-commit
 .PHONY: clean
 clean: ## clean go cache and compile artifacts
 	go clean -modcache
-	rm -f bin/auditor
+	rm -f bin/github-analyzer
 
 .PHONY: tidy
 tidy: ## tidy go deps

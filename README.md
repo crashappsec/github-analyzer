@@ -2,7 +2,7 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ossf/scorecard/badge)](https://api.securityscorecards.dev/projects/github.com/crashappsec/github-analyzer)
 [![Go Report Card](https://goreportcard.com/badge/github.com/ossf/scorecard/v4)](https://goreportcard.com/report/github.com/crashappsec/github-analyzer)
 
-# Github Security Auditor
+# Github Analyzer
 
 Audits a GitHub organization for potential security issues. The tool is
 currently in pre-alpha stage and only supports limited functionality, however
@@ -96,7 +96,7 @@ You can see available options via the `--help` flag.
 ### Running locally
 
 - From the root of the directory run `make`
-- Run `./bin/auditor --organization crashappsec --token "$GIT_ADMIN" --enableScraping --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED" --enableStats`
+- Run `./bin/github-analyzer --organization crashappsec --token "$GIT_ADMIN" --enableScraping --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED" --enableStats`
 
 ### Running using Docker
 
@@ -109,17 +109,17 @@ For **API-based based checks**, you need to pass in GitHub Token
 (either personal access token (PAT) or token derived from GitHub app installation)
 with the appropriate permissions. Example use:
 
-`./bin/auditor --organization crashappsec --token "$GIT_ADMIN"`
+`./bin/github-analyzer --organization crashappsec --token "$GIT_ADMIN"`
 
 See [our wiki](https://github.com/crashappsec/github-analyzer/wiki/Setting-up-GitHub#creating-a-token)
-for instructions on setting up a token to be used with the auditor.
+for instructions on setting up a token to be used with the github-analyzer.
 
 For **experimental scraping-based checks**, you need to pass in your username
 and password, as well your two factor authentication one-time-password, as
 needed. Example usage:
 
 ```shell
-./bin/auditor \
+./bin/github-analyzer \
     --organization crashappsec \
     --token "$GIT_ADMIN" \
     --enableStats \
@@ -130,7 +130,7 @@ needed. Example usage:
 ```
 
 See [our wiki](https://github.com/crashappsec/github-analyzer/wiki/Setting-up-GitHub#setting-up-2fa-experimental)
-for instructions on setting up a token to be used with the auditor.
+for instructions on setting up a token to be used with the analyzer.
 
 ## Credits
 

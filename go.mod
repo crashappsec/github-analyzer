@@ -6,6 +6,7 @@ require (
 	github.com/google/go-github/scrape v0.0.0-20221012165508-33444123bc7e
 	github.com/google/go-github/v47 v47.1.0
 	github.com/jpillora/backoff v1.0.0
+	github.com/otiai10/copy v1.7.0
 	github.com/spf13/cobra v1.5.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.13.0

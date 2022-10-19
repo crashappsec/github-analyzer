@@ -112,7 +112,7 @@ func parseStats(statsJson string) (string, error) {
          <li> <b>Number of private repos:</b> {{$stats.CoreStats.TotalPrivateRepos}}</li>
          <li> <b>Number of public gists:</b> {{$stats.CoreStats.PublicGists}}</li>
          <li> <b>Number of private gists:</b> {{$stats.CoreStats.PrivateGists}}</li>
-         <li> <b>Number of collaborators:</b> {{$stats.CoreStats.Collaborators}}</li>
+         <!-- <li> <b>Number of collaborators:</b> {{$stats.CoreStats.Collaborators}}</li> -->
          <li> <b>Number of webhooks:</b> {{$.TotalWebhooks}}</li>
          <li> <b>Number of installations:</b> {{$.TotalInstallations}}</li>
          <li> <b>Number of runners:</b> {{$.TotalRunners}}</li>
@@ -631,6 +631,7 @@ func staticHtml(
 
 func Serve(
 	org, orgStatsPath, permissionsPath, oauthAppPath, execStatusPath, issuesPath string,
+	htmlDir string,
 	port int,
 ) {
 	perms, err := parsePermissions(permissionsPath)
@@ -653,8 +654,7 @@ func Serve(
 		log.Logger.Error(err)
 	}
 
-	abs, _ := filepath.Abs("./pkg/output/html/static/index.html")
-	f, err := os.Create(abs)
+	f, err := os.Create(filepath.Join(htmlDir, "index.html"))
 	defer f.Close()
 
 	html, err := staticHtml(org, stats, issues, perms, appInfo)
@@ -666,8 +666,7 @@ func Serve(
 	if err != nil {
 		log.Logger.Error(err)
 	}
-	dirPath, _ := filepath.Abs("./pkg/output/html/static")
-	http.Handle("/", http.FileServer(http.Dir(dirPath)))
+	http.Handle("/", http.FileServer(http.Dir(htmlDir)))
 
 	log.Logger.Infoln(
 		"See the output/ directory for raw JSON files with analysis metadata",

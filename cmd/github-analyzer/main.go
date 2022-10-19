@@ -114,6 +114,7 @@ func runCmd() {
 		oauthPath,
 		execStatusPath,
 		issuesPath,
+		futils.HtmlDir,
 		config.ViperEnv.Port,
 	)
 }
