@@ -95,13 +95,17 @@ You can see available options via the `--help` flag.
 
 ### Running locally
 
-- From the root of the directory run `make`
-- Run `./bin/github-analyzer --organization crashappsec --token "$GIT_ADMIN" --enableScraping --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED" --enableStats`
+- Run `go install -v github.com/crashappsec/github-analyzer/cmd/github-analyzer@latest`
+- Run `$GOPATH/bin/github-analyzer --organization crashappsec --token "$GIT_ADMIN" --enableScraping --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED" --enableStats`
 
 ### Running using Docker
 
 - Build the container using `docker compose build --no-cache`
-- Run `docker run -v`pwd`:/tmp -p3000:3000 github-analyzer-co-github-analyzer --organization crashappsec --output /tmp/output --token "$GIT_ADMIN" --enableStats`
+- Run
+
+```sh
+docker run -v`pwd`:/tmp -p3000:3000 github-analyzer-co-github-analyzer --organization crashappsec --output /tmp/output --token "$GIT_ADMIN" --enableStats
+```
 
 ## Permissions
 
