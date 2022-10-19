@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 
 	"github.com/crashappsec/github-analyzer/pkg/config"
-	"github.com/crashappsec/github-analyzer/pkg/log"
-	"github.com/otiai10/copy"
 )
 
 var IssuesDir, StatsDir, MetadataDir, HtmlDir string
@@ -18,16 +16,11 @@ func Init() {
 	IssuesDir = filepath.Join(config.ViperEnv.OutputDir, "issues")
 	StatsDir = filepath.Join(config.ViperEnv.OutputDir, "stats")
 	MetadataDir = filepath.Join(config.ViperEnv.OutputDir, "metadata")
-	HtmlDir = filepath.Join(config.ViperEnv.OutputDir, "html")
 
 	CreateDir(config.ViperEnv.OutputDir)
 	CreateDir(IssuesDir)
 	CreateDir(StatsDir)
 	CreateDir(MetadataDir)
-	CreateDir(HtmlDir)
-	if err := copy.Copy("./pkg/output/html/static", HtmlDir); err != nil {
-		log.Logger.Error(err)
-	}
 }
 
 func CreateDir(path string) {

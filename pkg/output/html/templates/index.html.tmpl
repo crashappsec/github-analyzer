@@ -1,0 +1,243 @@
+{{ $stats := .Stats }}
+{{ $installations := .Installations }}
+{{ $issues := .Issues }}
+{{ $passed := .ChecksPassed }}
+{{ $apps := .Apps }}
+{{ $users := .Users }}
+{{ $permissions := .Permissions }}
+{{ $summary := .PermissionSummary }}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>
+    Report for {{.Org}}
+  </title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="static/css/bootstrap.css" media="screen" type="text/css">
+  <link rel="stylesheet" href="static/css/font-awesome.min.css" type="text/css">
+  <link rel="stylesheet" href="static/css/plain.css" type="text/css">
+  <link rel="shortcut icon" href="static/img/favicon.webp">
+</head>
+
+<body>
+<div class="container">
+  <div class="scantitle">
+    Summary for {{.Org}}
+  </div>
+
+  {{if $issues}}
+    <div class="page-header">
+      <div class="row">
+        <div class="col-lg-12">
+          Issues detected
+        </div>
+      </div>
+    </div>
+
+    <div class="issuelist">
+      <ul>
+        {{range $issue := $issues}}
+        <li>
+          <div class="issue">
+            <div class="issuetitle">
+              {{$issue.SeverityStr}} {{$issue.Issue.Name}}
+            </div>
+            <div class="cwes">
+              <b>Related CWEs:</b> {{$issue.CWEs}}
+            </div>
+            <div class="description">
+              <b>Description:</b> {{$issue.Description}}
+            </div>
+            <div class="remediation">
+              <b>Remediation:</b> {{$issue.Remediation}}
+            </div>
+            <span class="abstract">
+              [vulnerable resources]
+              <div class="full_abstract">
+                {{$issue.Issue.Resources}}
+              </div>
+            </span>
+          </div>
+        </li>
+        {{end}}
+      </ul>
+    </div>
+  {{end}}
+
+  {{if $passed}}
+    <div class="page-header">
+      <div class="row">
+        <div class="col-lg-12">
+          Checks Passed
+        </div>
+      </div>
+    </div>
+    <div>
+      <ul>
+        {{range $issue := $passed}}
+        <li>
+          <div class="issue">
+            <div class="issuetitle">
+              {{$issue}} <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
+                <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
+              </svg>
+            </div>
+        </li>
+        {{end}}
+      </ul>
+    </div>
+  {{end}}
+
+  <div class="sectiontitle">
+    {{.Org}} Misc Stats
+  </div>
+
+  <!-- Start of OrgStats -->
+  <div class="page-header">
+    <div class="row">
+      <div class="col-lg-12">
+        Org Info
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="shortlist">
+      <ul>
+        <li><b>Name:</b> {{$stats.CoreStats.Name}}</li>
+        <li><b>ID:</b> {{$stats.CoreStats.ID}}</li>
+         <li> <b>Organization is verified:</b> {{$stats.CoreStats.IsVerified}}</li>
+        <li> <b>Web commit Signoff Required:</b> {{$stats.CoreStats.WebCommitSignoffRequired}}</li>
+         <li> <b>Number of public repos:</b> {{$stats.CoreStats.PublicRepos}}</li>
+         <li> <b>Number of private repos:</b> {{$stats.CoreStats.TotalPrivateRepos}}</li>
+         <li> <b>Number of public gists:</b> {{$stats.CoreStats.PublicGists}}</li>
+         <li> <b>Number of private gists:</b> {{$stats.CoreStats.PrivateGists}}</li>
+         <!-- <li> <b>Number of collaborators:</b> {{$stats.CoreStats.Collaborators}}</li> -->
+         <li> <b>Number of webhooks:</b> {{$.TotalWebhooks}}</li>
+         <li> <b>Number of installations:</b> {{$.TotalInstallations}}</li>
+         <li> <b>Number of runners:</b> {{$.TotalRunners}}</li>
+         <li> <b>Members can create public repositories:</b> {{$stats.CoreStats.MembersCanCreatePublicRepos}}</li>
+         <li> <b>Members can create private repositories:</b> {{$stats.CoreStats.MembersCanCreatePrivateRepos}}</li>
+         <li> <b>Members can create internal repositories:</b> {{$stats.CoreStats.MembersCanCreateInternalRepos}}</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div class="row">
+      <div class="col-lg-12">
+        Dependency and Secret Scanning
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="shortlist">
+      <ul>
+        <li> <b>Advanced Security alerts enabled for new repos:</b> {{$stats.CoreStats.AdvancedSecurityEnabledForNewRepos}}</li>
+        <li> <b>Dependabot alerts enabled for new repos:</b> {{$stats.CoreStats.DependabotAlertsEnabledForNewRepos}}</li>
+        <li> <b>Dependabot security updates enabled for new repos:</b> {{$stats.CoreStats.DependabotSecurityUpdatesEnabledForNewRepos}}</li>
+        <li> <b>Dependency graph enabled for new repos:</b> {{$stats.CoreStats.DependencyGraphEnabledForNewRepos}}</li>
+        <li> <b>Secret scanning enabled for new repos:</b> {{$stats.CoreStats.SecretScanningEnabledForNewRepos}}</li>
+        <li> <b>Secret scanning push protection enabled for new repos:</b> {{$stats.CoreStats.SecretScanningPushProtectionEnabledForNewRepos}}</li>
+      </ul>
+    </div>
+  </div>
+
+  {{if $installations}}
+      <div class="page-header">
+        <div class="row">
+          <div class="col-lg-12">
+            Installations
+          </div>
+        </div>
+      </div>
+      <div>
+        <ul>
+          {{range $install := $installations}}
+          <li>
+            <div class="issuetitle">
+            {{$install.Name}} (ID: {{$install.ID}})
+            </div>
+          <b> Permissions </b> : {{$install.Permissions}}
+          </li>
+          {{end}}
+        </ul>
+      </div>
+  {{end}}
+
+  {{if $apps }}
+      <div class="page-header">
+        <div class="row">
+          <div class="col-lg-12">
+            OAuth App Statistics
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="issuelist">
+          <ul>
+            {{range $app := $apps}}
+            <li>
+              <div class="issue">
+                <div class="issuetitle">
+                  {{$app.App.Name}} (ID: {{$app.App.ID}})
+                </div>
+                {{if $app.App.Description}}
+                <div class="description">
+                  <b>Description:</b> {{$app.App.Description}}
+                </div>
+                {{end}}
+                <div class="state">
+                  <b>Status:</b> {{$app.State}}
+                </div>
+              </div>
+              {{if $app.App.RequestedBy}}
+              <div class="requester">
+                <b>Requested By:</b> {{$app.App.RequestedBy}}
+              </div>
+              {{end}}
+            </li>
+            {{end}}
+          </ul>
+        </div>
+      </div>
+  {{end}}
+
+  {{if $permissions }}
+      <div class="page-header">
+        <div class="row">
+          <div class="col-lg-12">
+            User Permission Statistics
+          </div>
+        </div>
+      </div>
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th scope="col">User</th>
+            {{range $permissions}}
+            <th scope="col">{{.}}</th>
+            {{end}}
+          </tr>
+        </thead>
+        <tbody>
+          {{range $user := $users}}
+          <tr>
+            <th scope="row">{{$user}}</th>
+            {{range $perm := $permissions}}
+            <td>{{index $summary $user $perm}}</td>
+            {{end}}
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+  {{end}}
+</div>
+</body>
+
+</html>
