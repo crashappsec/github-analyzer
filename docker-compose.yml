@@ -3,7 +3,7 @@ version: "3.8"
 services:
   co-github-analyzer:
     # image allows to cache all deps hence to speed up CI
-    # CI image: ghcr.io/crashappsec/github-security-auditor:latest
+    # CI image: ghcr.io/crashappsec/github-analyzer:latest
     build: . # CI
     container_name: github-analyzer
     working_dir: $PWD

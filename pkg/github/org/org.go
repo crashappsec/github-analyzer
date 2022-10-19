@@ -10,13 +10,13 @@ import (
 
 	"path/filepath"
 
-	"github.com/crashappsec/github-security-auditor/pkg/futils"
-	"github.com/crashappsec/github-security-auditor/pkg/github/repo"
-	"github.com/crashappsec/github-security-auditor/pkg/github/types"
-	"github.com/crashappsec/github-security-auditor/pkg/github/utils"
-	"github.com/crashappsec/github-security-auditor/pkg/issue"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/resource"
-	"github.com/crashappsec/github-security-auditor/pkg/log"
+	"github.com/crashappsec/github-analyzer/pkg/futils"
+	"github.com/crashappsec/github-analyzer/pkg/github/repo"
+	"github.com/crashappsec/github-analyzer/pkg/github/types"
+	"github.com/crashappsec/github-analyzer/pkg/github/utils"
+	"github.com/crashappsec/github-analyzer/pkg/issue"
+	"github.com/crashappsec/github-analyzer/pkg/issue/resource"
+	"github.com/crashappsec/github-analyzer/pkg/log"
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
 )

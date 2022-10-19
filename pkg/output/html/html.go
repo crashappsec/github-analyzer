@@ -13,9 +13,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/crashappsec/github-security-auditor/pkg/github/org"
-	"github.com/crashappsec/github-security-auditor/pkg/issue"
-	"github.com/crashappsec/github-security-auditor/pkg/log"
+	"github.com/crashappsec/github-analyzer/pkg/github/org"
+	"github.com/crashappsec/github-analyzer/pkg/issue"
+	"github.com/crashappsec/github-analyzer/pkg/log"
 	"github.com/google/go-github/scrape"
 	"github.com/google/go-github/v47/github"
 )

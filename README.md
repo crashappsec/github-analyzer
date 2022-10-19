@@ -1,6 +1,6 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/crashappsec/github-security-auditor/blob/main/LICENSE)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ossf/scorecard/badge)](https://api.securityscorecards.dev/projects/github.com/crashappsec/github-security-auditor)
-[![Go Report Card](https://goreportcard.com/badge/github.com/ossf/scorecard/v4)](https://goreportcard.com/report/github.com/crashappsec/github-security-auditor)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/crashappsec/github-analyzer/blob/main/LICENSE)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/ossf/scorecard/badge)](https://api.securityscorecards.dev/projects/github.com/crashappsec/github-analyzer)
+[![Go Report Card](https://goreportcard.com/badge/github.com/ossf/scorecard/v4)](https://goreportcard.com/report/github.com/crashappsec/github-analyzer)
 
 # Github Security Auditor
 
@@ -11,7 +11,6 @@ feature requests or contributions! Once the analysis is complete, a static HTML
 with the summary of the results is rendered in localhost:3000 as shown below:
 
 ![gh-analyzer](https://user-images.githubusercontent.com/4614044/196647323-8138c053-644c-42a7-86f2-d94a7ce5e295.gif)
-
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -112,7 +111,7 @@ with the appropriate permissions. Example use:
 
 `./bin/auditor --organization crashappsec --token "$GIT_ADMIN"`
 
-See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#creating-a-token)
+See [our wiki](https://github.com/crashappsec/github-analyzer/wiki/Setting-up-GitHub#creating-a-token)
 for instructions on setting up a token to be used with the auditor.
 
 For **experimental scraping-based checks**, you need to pass in your username
@@ -130,7 +129,7 @@ needed. Example usage:
     --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED"
 ```
 
-See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#setting-up-2fa-experimental)
+See [our wiki](https://github.com/crashappsec/github-analyzer/wiki/Setting-up-GitHub#setting-up-2fa-experimental)
 for instructions on setting up a token to be used with the auditor.
 
 ## Credits

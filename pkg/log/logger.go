@@ -19,7 +19,7 @@ func initLogger(enableStackTrace bool) *zap.SugaredLogger {
 
 	// FIXME read from env vasriable
 	logFile, err := os.OpenFile(
-		"github-security-auditor.log",
+		"github-analyzer.log",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
 		0644,
 	)

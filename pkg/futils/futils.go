@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/crashappsec/github-security-auditor/pkg/config"
+	"github.com/crashappsec/github-analyzer/pkg/config"
 )
 
 var IssuesDir, StatsDir, MetadataDir string

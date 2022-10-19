@@ -8,13 +8,13 @@ import (
 
 	"path/filepath"
 
-	"github.com/crashappsec/github-security-auditor/pkg/config"
-	"github.com/crashappsec/github-security-auditor/pkg/futils"
-	"github.com/crashappsec/github-security-auditor/pkg/github/auditor"
-	"github.com/crashappsec/github-security-auditor/pkg/issue"
-	"github.com/crashappsec/github-security-auditor/pkg/log"
-	"github.com/crashappsec/github-security-auditor/pkg/output/html"
-	"github.com/crashappsec/github-security-auditor/pkg/scraping"
+	"github.com/crashappsec/github-analyzer/pkg/config"
+	"github.com/crashappsec/github-analyzer/pkg/futils"
+	"github.com/crashappsec/github-analyzer/pkg/github/auditor"
+	"github.com/crashappsec/github-analyzer/pkg/issue"
+	"github.com/crashappsec/github-analyzer/pkg/log"
+	"github.com/crashappsec/github-analyzer/pkg/output/html"
+	"github.com/crashappsec/github-analyzer/pkg/scraping"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -120,7 +120,7 @@ func runCmd() {
 
 func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "github-security-auditor",
+		Use:   "github-analyzer",
 		Short: "A tool to collect and highlight potential security issues with a GitHub org",
 		Long:  "A tool to collect and highlight potential security issues with a GitHub org",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
@@ -137,7 +137,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.MarkFlagRequired("organization")
 
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.CfgFile, "config", "c", "", "config file (default is $HOME/.github-security-auditor.yaml)")
+		StringVarP(&config.ViperEnv.CfgFile, "config", "c", "", "config file (default is $HOME/.github-analyzer.yaml)")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.OutputDir, "output", "o", "output", "The directory containing the artifacts of the analysis")
 	rootCmd.Flags().

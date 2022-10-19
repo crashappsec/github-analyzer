@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/crashappsec/github-security-auditor/pkg/github/types"
-	"github.com/crashappsec/github-security-auditor/pkg/log"
+	"github.com/crashappsec/github-analyzer/pkg/github/types"
+	"github.com/crashappsec/github-analyzer/pkg/log"
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
 )

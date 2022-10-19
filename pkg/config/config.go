@@ -1,7 +1,7 @@
 package config
 
 const (
-	ConfigFileBasename = "github-security-auditor"
+	ConfigFileBasename = "github-analyzer"
 
 	ViperEnvPrefix = "GH_SECURITY_AUDITOR"
 )

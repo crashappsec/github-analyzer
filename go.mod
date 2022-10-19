@@ -1,4 +1,4 @@
-module github.com/crashappsec/github-security-auditor
+module github.com/crashappsec/github-analyzer
 
 go 1.19
 

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/crashappsec/github-security-auditor/pkg/issue/category"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/resource"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/severity"
-	"github.com/crashappsec/github-security-auditor/pkg/issue/tags"
+	"github.com/crashappsec/github-analyzer/pkg/issue/category"
+	"github.com/crashappsec/github-analyzer/pkg/issue/resource"
+	"github.com/crashappsec/github-analyzer/pkg/issue/severity"
+	"github.com/crashappsec/github-analyzer/pkg/issue/tags"
 )
 
 type IssueID string

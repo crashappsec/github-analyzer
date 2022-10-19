@@ -1,6 +1,6 @@
 index.html
 output
-github-security-auditor.log
+github-analyzer.log
 .DS_Store
 *.[56789ao]
 *.a[56789o]
