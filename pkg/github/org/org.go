@@ -56,6 +56,10 @@ func NewOrganization(
 			log.Logger.Errorf(
 				"Unable to retrieve organization information. It appears the token being used doesn't have access to this information.",
 			)
+		} else if resp.StatusCode == 404 {
+			log.Logger.Errorf(
+				"Organization not found. Perhaps there's a typo in the org name?",
+			)
 		} else {
 			log.Logger.Error(err)
 		}

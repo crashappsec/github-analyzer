@@ -33,6 +33,8 @@ func InstallsAggregator(
 		in := types.Install{
 			ID:                     install.ID,
 			AppID:                  install.AppID,
+			AppSlug:                install.AppSlug,
+			NodeID:                 install.NodeID,
 			TargetID:               install.TargetID,
 			Account:                install.Account,
 			TargetType:             install.TargetType,

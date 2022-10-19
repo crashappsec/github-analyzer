@@ -55,11 +55,10 @@ func runCmd() {
 		checkStatuses = execStatus
 	}
 
-	token := os.Getenv(config.ViperEnv.TokenName)
-	if token == "" {
-		log.Logger.Error(fmt.Errorf("Github token not set"))
+	if config.ViperEnv.Token == "" {
+		log.Logger.Errorf("Github token not set")
 	} else {
-		auditor, err := auditor.NewGithubAuditor(token)
+		auditor, err := auditor.NewGithubAuditor(config.ViperEnv.Token)
 		if err != nil {
 			log.Logger.Error(err)
 			return
@@ -144,7 +143,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.TokenName, "tokenName", "", "GH_SECURITY_AUDITOR_TOKEN", "The environment variable name we should retrieve the token for API authentication")
+		StringVarP(&config.ViperEnv.Token, "token", "", "", "The github token for API authentication")
 
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableStats, "enableStats", "", false, "Enable statistic-only reports (might be slow due to throttling limits)")

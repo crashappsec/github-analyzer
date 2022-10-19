@@ -17,6 +17,7 @@ import (
 	"github.com/crashappsec/github-security-auditor/pkg/issue"
 	"github.com/crashappsec/github-security-auditor/pkg/log"
 	"github.com/google/go-github/scrape"
+	"github.com/google/go-github/v47/github"
 )
 
 type WrappedOAuthApp struct {
@@ -91,6 +92,7 @@ func parseStats(statsJson string) (string, error) {
 
 	const tmpl = `
   {{ $stats := .Stats }}
+  {{ $installations := .Installations }}
   <div class="page-header">
     <div class="row">
       <div class="col-lg-12">
@@ -140,23 +142,66 @@ func parseStats(statsJson string) (string, error) {
       </ul>
     </div>
   </div>
+
+  {{if $installations}}
+  <div class="page-header">
+    <div class="row">
+      <div class="col-lg-12">
+        Installations
+      </div>
+    </div>
+  </div>
+  <div>
+    <ul>
+      {{range $install := $installations}}
+      <li>
+        <div class="issuetitle">
+        {{$install.Name}} (ID: {{$install.ID}})
+        </div>
+      <b> Permissions </b> : {{$install.Permissions}}
+      </li>
+      {{end}}
+    </ul>
+  </div>
+  {{end}}
   `
 	t, err := template.New("stats").Parse(tmpl)
 	if err != nil {
 		log.Logger.Error(err)
 		return "", err
 	}
+	type InstallationInfo struct {
+		Name        string
+		ID          int64
+		Permissions string
+	}
 	type PageData struct {
 		Stats              org.OrgStats
 		TotalRunners       int
 		TotalInstallations int
 		TotalWebhooks      int
+		Installations      []InstallationInfo
+	}
+
+	var wrappedInstallations []InstallationInfo
+	for _, i := range stats.Installations {
+		perm := strings.Split(github.Stringify(i.Permissions), "{")
+		description := strings.Split(strings.Split(perm[1], "}")[0], ", ")
+		sort.Strings(description)
+		finalPerm := strings.Join(description, ", ")
+		wrappedInstallations = append(wrappedInstallations,
+			InstallationInfo{
+				ID:          *i.ID,
+				Name:        *i.AppSlug,
+				Permissions: finalPerm,
+			})
 	}
 
 	var tmpBuff bytes.Buffer
 	err = t.Execute(&tmpBuff,
 		PageData{
 			Stats:              stats,
+			Installations:      wrappedInstallations,
 			TotalRunners:       len(stats.Runners),
 			TotalWebhooks:      len(stats.Webhooks),
 			TotalInstallations: len(stats.Installations),

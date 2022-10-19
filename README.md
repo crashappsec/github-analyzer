@@ -93,11 +93,12 @@ You can see available options via the `--help` flag.
 ### Running locally
 
 - From the root of the directory run `make`
-- Run `./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
+- Run `./bin/auditor --organization crashappsec --token "$GIT_ADMIN" --enableScraping --username $GH_SECURITY_AUDITOR_USERNAME --password "$GH_SECURITY_AUDITOR_PASSWORD" --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED" --enableStats`
 
 ### Running using Docker
 
-Run `docker compose run auditor --organization crahsappsec`
+- Build the container using `docker compose build --no-cache`
+- Run `docker run -v`pwd`:/tmp -p3000:3000 github-analyzer-co-github-analyzer --organization crashappsec --output /tmp/output --token "$GIT_ADMIN" --enableStats`
 
 ## Permissions
 
@@ -105,7 +106,7 @@ For **API-based based checks**, you need to pass in GitHub Token
 (either personal access token (PAT) or token derived from GitHub app installation)
 with the appropriate permissions. Example use:
 
-`./bin/auditor --organization crashappsec --tokenName GIT_ADMIN`
+`./bin/auditor --organization crashappsec --token "$GIT_ADMIN"`
 
 See [our wiki](https://github.com/crashappsec/github-security-auditor/wiki/Setting-up-GitHub#creating-a-token)
 for instructions on setting up a token to be used with the auditor.
@@ -117,10 +118,10 @@ needed. Example usage:
 ```shell
 ./bin/auditor \
     --organization crashappsec \
-    --tokenName GIT_ADMIN \
+    --token "$GIT_ADMIN" \
     --enableStats \
     --enableScraping \
-    --username $GH_SECURITY_AUDITOR_USERNAME \
+    --username "$GH_SECURITY_AUDITOR_USERNAME" \
     --password "$GH_SECURITY_AUDITOR_PASSWORD" \
     --otpSeed "$GH_SECURITY_AUDITOR_OTP_SEED"
 ```

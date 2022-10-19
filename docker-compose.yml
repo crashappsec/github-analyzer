@@ -1,15 +1,19 @@
 version: "3.8"
 
 services:
-  auditor:
+  co-github-analyzer:
     # image allows to cache all deps hence to speed up CI
     # CI image: ghcr.io/crashappsec/github-security-auditor:latest
     build: . # CI
-    container_name: github-security-auditor
+    container_name: github-analyzer
     working_dir: $PWD
     ports:
       - 3000:3000
     volumes:
       - $PWD:$PWD
+    network_mode: "host"
     environment:
-      GIT_TOKEN: ${GIT_TOKEN:-}
+      GH_SECURITY_AUDITOR_TOKEN: ${GH_SECURITY_AUDITOR_TOKEN:-}
+      GH_SECURITY_AUDITOR_USERNAME: ${GH_SECURITY_AUDITOR_USERNAME:-}
+      GH_SECURITY_AUDITOR_PASSWORD: ${GH_SECURITY_AUDITOR_PASSWORD:-}
+      GH_SECURITY_AUDITOR_OTP_SEED: ${GH_SECURITY_AUDITOR_OTP_SEED:-}

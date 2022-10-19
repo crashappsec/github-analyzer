@@ -16,7 +16,7 @@ type ViperEnvVars struct {
 	Password       string `mapstructure:"PASSWORD"`
 	Port           int    `mapstructure:"PORT"`
 	ScmURL         string `mapstructure:"SCM_URL"`
-	TokenName      string `mapstructure:"TOKEN_NAME"`
+	Token          string `mapstructure:"TOKEN"`
 	Username       string `mapstructure:"USERNAME"`
 }
 

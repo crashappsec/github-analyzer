@@ -15,6 +15,8 @@ type Runner struct {
 type Install struct {
 	ID                     *int64                          `json:"id,omitempty"`
 	AppID                  *int64                          `json:"app_id,omitempty"`
+	AppSlug                *string                         `json:"app_slug,omitempty"`
+	NodeID                 *string                         `json:"node_id,omitempty"`
 	TargetID               *int64                          `json:"target_id,omitempty"`
 	Account                *github.User                    `json:"account,omitempty"`
 	TargetType             *string                         `json:"target_type,omitempty"`
