@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	_ "embed"
 	"path/filepath"
 
 	"github.com/crashappsec/github-analyzer/pkg/config"
@@ -19,6 +20,10 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
+
+//go:generate sh version.sh
+//go:embed version.txt
+var version string
 
 func main() {
 	if err := NewRootCommand().Execute(); err != nil {
@@ -121,7 +126,10 @@ func runCmd() {
 
 func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
-		Use:   "github-analyzer",
+		Use: fmt.Sprintf(
+			"github-analyzer (v%s)",
+			strings.TrimSuffix(version, "\n"),
+		),
 		Short: "A tool to collect and highlight potential security issues with a GitHub org",
 		Long:  "A tool to collect and highlight potential security issues with a GitHub org",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {

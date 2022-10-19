@@ -1,7 +1,8 @@
 .PHONY: all
 all: ## compile auditor
 	mkdir -p bin
-	go build -o bin/github-analyzer cmd/github-analyzer/main.go
+	go generate
+	go build -v -o bin/github-analyzer cmd/github-analyzer/main.go
 
 .PHONY: lint
 lint: ## lint everything with pre-commit
