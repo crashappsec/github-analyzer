@@ -10,6 +10,7 @@ type ViperEnvVars struct {
 	CfgFile        string `mapstructure:"CFG_FILE"`
 	EnableScraping bool   `mapstructure:"ENABLE_SCRAPING"`
 	EnableStats    bool   `mapstructure:"ENABLE_STATS"`
+	Version        bool   `mapstructure:"VERSION"`
 	Organization   string `mapstructure:"ORGANIZATION"`
 	OtpSeed        string `mapstructure:"OTP_SEED"`
 	OutputDir      string `mapstructure:"OUTPUT_DIR"`

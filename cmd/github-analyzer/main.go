@@ -135,14 +135,22 @@ func runCmd() {
 func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use: fmt.Sprintf(
-			"github-analyzer (v%s)",
+			"github-analyzer (%s)",
 			strings.TrimSuffix(version, "\n"),
 		),
-		Short: "A tool to collect and highlight potential security issues with a GitHub org",
-		Long:  "A tool to collect and highlight potential security issues with a GitHub org",
+		Short: "A tool to collect statistics and highlight potential security issues within a GitHub org",
+		Long:  "A tool to collect statistics and highlight potential security issues within a GitHub org",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// You can bind cobra and viper in a few locations, but PersistencePreRunE on the root command works well
 			return initializeConfig(cmd)
+		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			onlyPrintVersion, _ := cmd.Flags().GetBool("version")
+			if onlyPrintVersion {
+				fmt.Println(version)
+				os.Exit(0)
+			}
+			cmd.MarkFlagRequired("organization")
 		},
 		Run: func(cmd *cobra.Command, args []string) {
 			runCmd()
@@ -150,32 +158,33 @@ func NewRootCommand() *cobra.Command {
 	}
 	// TODO allow auditing a repo/user account only
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Organization, "organization", "", "", "The organization we want to check the security on")
-	rootCmd.MarkFlagRequired("organization")
+		StringVarP(&config.ViperEnv.Organization, "organization", "", "", "the GitHub organization to be analyzed")
 
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.CfgFile, "config", "c", "", "config file (default is $HOME/.github-analyzer.yaml)")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.OutputDir, "output", "o", "output", "The directory containing the artifacts of the analysis")
+		StringVarP(&config.ViperEnv.OutputDir, "output", "o", "output", "the directory containing the artifacts of the analysis")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "The API URL for the source control management software you want to check")
+		StringVarP(&config.ViperEnv.ScmURL, "scmUrl", "", "", "the API URL for the source control management software you want to check")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Token, "token", "", "", fmt.Sprintf("The github token for API authentication (default is $%s_TOKEN)", config.ViperEnvPrefix))
+		StringVarP(&config.ViperEnv.Token, "token", "", "", fmt.Sprintf("the github token for API authentication (default is $%s_TOKEN)", config.ViperEnvPrefix))
 
 	rootCmd.Flags().
-		BoolVarP(&config.ViperEnv.EnableStats, "enableStats", "", false, "Enable statistic-only reports (might be slow due to throttling limits)")
+		BoolVarP(&config.ViperEnv.Version, "version", "", false, "print version and exit")
+	rootCmd.Flags().
+		BoolVarP(&config.ViperEnv.EnableStats, "enableStats", "", false, "enable user permission statistics (might be slow due to throttling limits)")
 
 	rootCmd.Flags().
-		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "Enable experimental checks that rely on screen scraping")
+		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "enable experimental checks that rely on screen scraping")
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Username, "username", "u", "", fmt.Sprintf("Username (required if enableScraping is set) (default is $%s_USERNAME)", config.ViperEnvPrefix))
+		StringVarP(&config.ViperEnv.Username, "username", "u", "", fmt.Sprintf("username (required if enableScraping is set) (default is $%s_USERNAME)", config.ViperEnvPrefix))
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.Password, "password", "p", "", fmt.Sprintf("Password (required if enableScraping is set) (default is $%s_PASSWORD)", config.ViperEnvPrefix))
+		StringVarP(&config.ViperEnv.Password, "password", "p", "", fmt.Sprintf("password (required if enableScraping is set) (default is $%s_PASSWORD)", config.ViperEnvPrefix))
 	rootCmd.Flags().
-		StringVarP(&config.ViperEnv.OtpSeed, "otpSeed", "", "", fmt.Sprintf("One Time Password (required if enableScraping is set) (default is $%s_OTP_SEED)", config.ViperEnvPrefix))
+		StringVarP(&config.ViperEnv.OtpSeed, "otpSeed", "", "", fmt.Sprintf("one Time Password (required if enableScraping is set) (default is $%s_OTP_SEED)", config.ViperEnvPrefix))
 
 	rootCmd.Flags().
-		IntVarP(&config.ViperEnv.Port, "port", "", 3000, "Port for local http server used to display HTML with summary of findings (if you are using docker you will need to override the default port appropriately)")
+		IntVarP(&config.ViperEnv.Port, "port", "", 3000, "port for local http server used to display HTML with summary of findings (if you are using docker you will need to override the default port appropriately)")
 	return rootCmd
 }
 
