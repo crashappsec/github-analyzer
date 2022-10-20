@@ -68,6 +68,9 @@
 .issuetitle {
   color: #a2e504;
 }
+.failedissuetitle {
+  color: #990000;
+}
 .full_abstract {
   display: none;
 }

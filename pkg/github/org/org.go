@@ -381,6 +381,11 @@ func (org *Organization) Audit2FA(
 	execStatus := map[issue.IssueID]error{}
 
 	log.Logger.Debug("Checking if 2FA is required at org-level")
+	if org.CoreStats.TwoFactorRequirementEnabled == nil {
+		execStatus[issue.AUTH_2FA_ORG_DISABLED] = utils.PermissionsError
+		execStatus[issue.AUTH_2FA_USER_DISABLED] = utils.PermissionsError
+		return issues, execStatus, utils.PermissionsError
+	}
 	execStatus[issue.AUTH_2FA_ORG_DISABLED] = nil
 	execStatus[issue.AUTH_2FA_USER_DISABLED] = nil
 	if !*org.CoreStats.TwoFactorRequirementEnabled {
@@ -485,16 +490,26 @@ func (org *Organization) AuditCoreStats(
 	var issues []issue.Issue
 	execStatus := make(map[issue.IssueID]error, 2)
 
-	execStatus[issue.TOOLING_ADVANCED_SECURITY_DISABLED] = nil
-	if !*org.CoreStats.AdvancedSecurityEnabledForNewRepos {
+	if org.CoreStats == nil {
+		log.Logger.Fatalf(
+			"It appears you don't have permissions to query this org",
+		)
+	}
+
+	if org.CoreStats.AdvancedSecurityEnabledForNewRepos == nil {
+		execStatus[issue.TOOLING_ADVANCED_SECURITY_DISABLED] = utils.PermissionsError
+	} else if !*org.CoreStats.AdvancedSecurityEnabledForNewRepos {
+		execStatus[issue.TOOLING_ADVANCED_SECURITY_DISABLED] = nil
 		issues = append(
 			issues,
 			issue.OrgAdvancedSecurityDisabled(*org.info.Login),
 		)
 	}
 
-	execStatus[issue.INF_DISC_SECRET_SCANNING_DISABLED] = nil
-	if !*org.CoreStats.SecretScanningEnabledForNewRepos {
+	if org.CoreStats.SecretScanningEnabledForNewRepos == nil {
+		execStatus[issue.INF_DISC_SECRET_SCANNING_DISABLED] = utils.PermissionsError
+	} else if !*org.CoreStats.SecretScanningEnabledForNewRepos {
+		execStatus[issue.INF_DISC_SECRET_SCANNING_DISABLED] = nil
 		issues = append(
 			issues,
 			issue.OrgSecretScanningDisabledForNewRepos(*org.info.Login),

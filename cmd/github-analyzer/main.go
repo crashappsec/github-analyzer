@@ -101,6 +101,14 @@ func runCmd() {
 		}
 	}
 
+	errors := map[issue.IssueID]string{}
+	for k, v := range checkStatuses {
+		if v == nil {
+			errors[k] = ""
+			continue
+		}
+		errors[k] = fmt.Sprintf("%v", v)
+	}
 	issuesPath := filepath.Join(futils.IssuesDir, "issues.json")
 	auditStatsPath := filepath.Join(futils.StatsDir, "auditStats.json")
 	execStatusPath := filepath.Join(futils.MetadataDir, "execStatus.json")
@@ -110,7 +118,7 @@ func runCmd() {
 
 	futils.SerializeFile(issues, issuesPath)
 	futils.SerializeFile(stats, auditStatsPath)
-	futils.SerializeFile(checkStatuses, execStatusPath)
+	futils.SerializeFile(errors, execStatusPath)
 
 	html.Serve(
 		config.ViperEnv.Organization,

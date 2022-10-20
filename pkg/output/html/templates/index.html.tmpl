@@ -2,6 +2,7 @@
 {{ $installations := .Installations }}
 {{ $issues := .Issues }}
 {{ $passed := .ChecksPassed }}
+{{ $failed := .ChecksFailed }}
 {{ $apps := .Apps }}
 {{ $users := .Users }}
 {{ $permissions := .Permissions }}
@@ -85,6 +86,29 @@
               {{$issue}} <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">
                 <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8" />
               </svg>
+            </div>
+        </li>
+        {{end}}
+      </ul>
+    </div>
+  {{end}}
+
+  {{if $failed}}
+    <div class="page-header">
+      <div class="row">
+        <div class="col-lg-12">
+          Checks that did not successfully complete
+        </div>
+      </div>
+    </div>
+    <div>
+      The following checks had errors - does token you used have the appropriate permissions?
+      <ul>
+        {{range $issue := $failed}}
+        <li>
+          <div class="issue">
+            <div class="failedissuetitle">
+              [X] {{$issue}}
             </div>
         </li>
         {{end}}
