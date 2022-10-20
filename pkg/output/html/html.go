@@ -192,12 +192,12 @@ func parsePermissions(
 
 func parseIssues(
 	execStatusPath, issuesPath string,
-) ([]WrappedIssue, []string, error) {
-	var checks map[issue.IssueID]error
+) ([]WrappedIssue, []string, []string, error) {
+	var checks map[issue.IssueID]string
 	jsonFile, err := os.Open(execStatusPath)
 	if err != nil {
 		jsonFile.Close()
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	jsonBytes, _ := ioutil.ReadAll(jsonFile)
 	json.Unmarshal(jsonBytes, &checks)
@@ -208,7 +208,7 @@ func parseIssues(
 	jsonFile, err = os.Open(issuesPath)
 	if err != nil {
 		jsonFile.Close()
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 	jsonBytes, _ = ioutil.ReadAll(jsonFile)
 	json.Unmarshal(jsonBytes, &issues)
@@ -247,14 +247,20 @@ func parseIssues(
 	}
 
 	var passed []string
-	for ch := range checks {
+	var failed []string
+	for ch, hadError := range checks {
 		if strings.HasPrefix(string(ch), "STATS") {
 			continue
 		}
-		passed = append(passed, issue.AvailableChecks[ch])
+		if hadError != "" {
+			failed = append(failed, issue.AvailableChecks[ch])
+		} else {
+			passed = append(passed, issue.AvailableChecks[ch])
+		}
 	}
 	sort.Strings(passed)
-	return wrappedIssues, passed, nil
+	sort.Strings(failed)
+	return wrappedIssues, passed, failed, nil
 }
 
 func Serve(
@@ -267,7 +273,10 @@ func Serve(
 		log.Logger.Error(err)
 	}
 
-	wrappedIssues, checksPassed, err := parseIssues(execStatusPath, issuesPath)
+	wrappedIssues, checksPassed, checksFailed, err := parseIssues(
+		execStatusPath,
+		issuesPath,
+	)
 	if err != nil {
 		log.Logger.Error(err)
 	}
@@ -296,6 +305,7 @@ func Serve(
 		Issues             []WrappedIssue
 		Installations      []InstallationInfo
 		ChecksPassed       []string
+		ChecksFailed       []string
 		Permissions        []string
 		Users              []string
 		PermissionSummary  map[string]map[string]string
@@ -320,6 +330,7 @@ func Serve(
 				Issues:             wrappedIssues,
 				Installations:      wrappedInstallations,
 				ChecksPassed:       checksPassed,
+				ChecksFailed:       checksFailed,
 				Permissions:        perms,
 				Users:              users,
 				PermissionSummary:  permissionSummary,

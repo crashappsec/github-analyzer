@@ -2,6 +2,9 @@ package utils
 
 import (
 	"context"
+	"fmt"
+	"reflect"
+	"runtime"
 	"time"
 
 	"github.com/crashappsec/github-analyzer/pkg/github/types"
@@ -9,6 +12,8 @@ import (
 	"github.com/google/go-github/v47/github"
 	"github.com/jpillora/backoff"
 )
+
+var PermissionsError = fmt.Errorf("Permissions error")
 
 func RunnersAggregator(runners *github.Runners) []types.Runner {
 	var orgRunners []types.Runner
@@ -104,8 +109,13 @@ func GetPaginatedResult[T any, K any](
 
 		if err != nil {
 			if resp.StatusCode == 403 {
-				log.Logger.Infoln(
-					"It appears the token being used doesn't have access to this information",
+				log.Logger.Debugf(
+					"It appears the token being used doesn't have access to call %v",
+					runtime.FuncForPC(reflect.ValueOf(githubCall).Pointer()).
+						Name(),
+				)
+				log.Logger.Errorf(
+					"The token used does not have premissions to make this API call",
 				)
 			} else {
 				log.Logger.Error(err)
