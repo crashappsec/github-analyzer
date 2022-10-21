@@ -49,7 +49,7 @@ func NewGithubAuditor(token string) (*GithubAuditor, error) {
 // or yielded in an error), and a generic overall error if audit fails overall
 func (gs GithubAuditor) AuditOrg(
 	name string,
-	enableStats bool,
+	enableUserPermissionStats bool,
 ) ([]issue.Issue, map[issue.IssueID]error, error) {
 	ctx := context.Background()
 	back := &backoff.Backoff{
@@ -63,5 +63,5 @@ func (gs GithubAuditor) AuditOrg(
 		return nil, nil, err
 	}
 
-	return org.Audit(ctx, enableStats)
+	return org.Audit(ctx, enableUserPermissionStats)
 }

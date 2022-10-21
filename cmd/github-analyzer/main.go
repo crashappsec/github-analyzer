@@ -51,8 +51,7 @@ func runCmd() {
 			config.ViperEnv.Username,
 			config.ViperEnv.Password,
 			config.ViperEnv.OtpSeed,
-			config.ViperEnv.Organization,
-			config.ViperEnv.EnableStats)
+			config.ViperEnv.Organization)
 		if err != nil {
 			log.Logger.Error(err)
 		}
@@ -68,7 +67,7 @@ func runCmd() {
 			log.Logger.Error(err)
 			return
 		}
-		results, execStatus, err := auditor.AuditOrg(config.ViperEnv.Organization, config.ViperEnv.EnableStats)
+		results, execStatus, err := auditor.AuditOrg(config.ViperEnv.Organization, config.ViperEnv.UserPermissionStats)
 		if err != nil {
 			log.Logger.Error(err)
 		}
@@ -172,7 +171,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.Version, "version", "", false, "print version and exit")
 	rootCmd.Flags().
-		BoolVarP(&config.ViperEnv.EnableStats, "enableStats", "", false, "enable user permission statistics (might be slow due to throttling limits)")
+		BoolVarP(&config.ViperEnv.UserPermissionStats, "userPermissionStats", "", false, "enable user permission statistics (might be slow in large orgs due to throttling limits)")
 
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "enable experimental checks that rely on screen scraping")

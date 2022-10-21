@@ -12,7 +12,7 @@ import (
 )
 
 func AuditScraping(
-	username, password, otpseed, org string, enableStats bool,
+	username, password, otpseed, org string,
 ) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var issues []issue.Issue
 	execStatus := make(map[issue.IssueID]error, 1)
@@ -31,10 +31,6 @@ func AuditScraping(
 	}
 	if !restrictedAccess && err == nil {
 		issues = append(issues, issue.ApplicationRestrictionsDisabled(org))
-	}
-
-	if !enableStats {
-		return issues, execStatus, nil
 	}
 
 	apps, err := client.ListOAuthApps(org)
