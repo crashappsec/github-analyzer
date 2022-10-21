@@ -97,17 +97,29 @@ func GetPaginatedResult[T any, K any](
 ) ([]T, error) {
 
 	var results []T
+	retries := 0
+
 	for {
 		raw, resp, err := githubCall(callOpts)
 
-		if _, ok := err.(*github.RateLimitError); ok {
+		_, ok := err.(*github.RateLimitError)
+		if ok || resp == nil {
 			d := backoff.Duration()
 			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
 			time.Sleep(d)
+			if resp == nil {
+				retries += 1
+				if retries > 5 {
+					return results, fmt.Errorf(
+						"Aborting after 5 failed retries",
+					)
+				}
+			}
 			continue
 		}
 
-		if err != nil {
+		retries = 0
+		if err != nil && resp != nil {
 			if resp.StatusCode == 403 {
 				log.Logger.Debugf(
 					"It appears the token being used doesn't have access to call %v",
