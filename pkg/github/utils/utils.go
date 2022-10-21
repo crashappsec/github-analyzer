@@ -109,7 +109,7 @@ func GetPaginatedResult[T any, K any](
 	} else {
 		back = &backoff.Backoff{
 			Min:    30 * time.Second,
-			Max:    10 * time.Minute,
+			Max:    30 * time.Minute,
 			Jitter: true,
 		}
 	}
@@ -124,7 +124,7 @@ func GetPaginatedResult[T any, K any](
 			time.Sleep(d)
 			if resp == nil {
 				retries += 1
-				if retries > 5 {
+				if retries > 10 {
 					return results, fmt.Errorf(
 						"Aborting after 5 failed retries",
 					)
