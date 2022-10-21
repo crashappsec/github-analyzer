@@ -157,6 +157,7 @@ func (repo *Repository) GetCollaborators(ctx context.Context) (
 		log.Logger.Error(err)
 	}
 
+	repo.backoff.Reset()
 	collaborators := make(map[types.UserLogin]types.User, len(users))
 	for _, u := range users {
 		collaborators[types.UserLogin(*u.Login)] = u

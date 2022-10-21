@@ -543,6 +543,8 @@ func (org *Organization) AuditMemberPermissions(
 	var issues []issue.Issue
 	execStatus := make(map[issue.IssueID]error, 1)
 
+	log.Logger.Infof("[slow] Fetching user permissions for %s", *org.info.Login)
+
 	// userRepoPermissions holds a list of all repos with a given permission for a given user
 	type userRepoPermissions map[string]([]types.RepoName)
 	// permission summary is the list of different permissions for a user
@@ -620,7 +622,7 @@ func (org *Organization) AuditMemberPermissions(
 
 func (org *Organization) Audit(
 	ctx context.Context,
-	enableStats bool,
+	enableUserPermissionStats bool,
 ) ([]issue.Issue, map[issue.IssueID]error, error) {
 	var allIssues []issue.Issue
 	execStatus := map[issue.IssueID]error{}
@@ -634,7 +636,7 @@ func (org *Organization) Audit(
 	org.GetInstalls(ctx)
 	org.GetActionRunners(ctx)
 
-	if enableStats {
+	if enableUserPermissionStats {
 		auditHooks = append(auditHooks, org.AuditMemberPermissions)
 	}
 	for _, hook := range auditHooks {

@@ -49,12 +49,12 @@ func NewGithubAuditor(token string) (*GithubAuditor, error) {
 // or yielded in an error), and a generic overall error if audit fails overall
 func (gs GithubAuditor) AuditOrg(
 	name string,
-	enableStats bool,
+	enableUserPermissionStats bool,
 ) ([]issue.Issue, map[issue.IssueID]error, error) {
 	ctx := context.Background()
 	back := &backoff.Backoff{
-		Min:    10 * time.Second,
-		Max:    1 * time.Hour,
+		Min:    30 * time.Second,
+		Max:    30 * time.Minute,
 		Jitter: true,
 	}
 	org, err := org.NewOrganization(ctx, gs.client, back, name)
@@ -63,5 +63,5 @@ func (gs GithubAuditor) AuditOrg(
 		return nil, nil, err
 	}
 
-	return org.Audit(ctx, enableStats)
+	return org.Audit(ctx, enableUserPermissionStats)
 }

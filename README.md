@@ -104,7 +104,6 @@ You can see available options via the `--help` flag.
   $GOPATH/bin/github-analyzer \
     --organization crashappsec \
     --token "$GH_SECURITY_AUDITOR_TOKEN" \
-    --enableStats
   ```
 
 ### Running using Docker
@@ -121,7 +120,6 @@ You can see available options via the `--help` flag.
           --organization crashappsec \
           --output output \
           --token "$GH_SECURITY_AUDITOR_TOKEN" \
-          --enableStats
   ```
 
 ## Permissions
@@ -147,7 +145,7 @@ needed. Example usage:
 github-analyzer \
     --organization crashappsec \
     --token "$GH_SECURITY_AUDITOR_TOKEN" \
-    --enableStats \
+    --userPermissionStats \
     --enableScraping \
     --username "$GH_SECURITY_AUDITOR_USERNAME" \
     --password "$GH_SECURITY_AUDITOR_PASSWORD" \

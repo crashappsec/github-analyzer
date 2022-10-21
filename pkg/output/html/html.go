@@ -342,6 +342,9 @@ func Serve(
 		"Server with HTML summary starting at 0.0.0.0:%d\n",
 		port,
 	)
+	fmt.Println(
+		"\n\n\t Analysis complete! Visit localhost:3000 using your browser to see results",
+	)
 	err = http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
 	if err != nil {
 		log.Logger.Error(err)
