@@ -53,8 +53,8 @@ func (gs GithubAuditor) AuditOrg(
 ) ([]issue.Issue, map[issue.IssueID]error, error) {
 	ctx := context.Background()
 	back := &backoff.Backoff{
-		Min:    10 * time.Second,
-		Max:    1 * time.Hour,
+		Min:    30 * time.Second,
+		Max:    10 * time.Minute,
 		Jitter: true,
 	}
 	org, err := org.NewOrganization(ctx, gs.client, back, name)

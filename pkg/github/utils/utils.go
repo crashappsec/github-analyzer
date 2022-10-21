@@ -90,7 +90,7 @@ func WorkflowsAggregator(workflows *github.Workflows) []types.Workflow {
 
 func GetPaginatedResult[T any, K any](
 	ctx context.Context,
-	backoff *backoff.Backoff,
+	globalBackoff *backoff.Backoff,
 	callOpts *github.ListOptions,
 	githubCall func(opts *github.ListOptions) (K, *github.Response, error),
 	aggregator func(K) []T,
@@ -99,13 +99,28 @@ func GetPaginatedResult[T any, K any](
 	var results []T
 	retries := 0
 
+	var back *backoff.Backoff
+	if globalBackoff != nil {
+		back = &backoff.Backoff{
+			Min:    globalBackoff.Min,
+			Max:    globalBackoff.Max,
+			Jitter: globalBackoff.Jitter,
+		}
+	} else {
+		back = &backoff.Backoff{
+			Min:    30 * time.Second,
+			Max:    10 * time.Minute,
+			Jitter: true,
+		}
+	}
+
 	for {
 		raw, resp, err := githubCall(callOpts)
 
 		_, ok := err.(*github.RateLimitError)
 		if ok || resp == nil {
-			d := backoff.Duration()
-			log.Logger.Infoln("Hit rate limit, sleeping for %d", d)
+			d := back.Duration()
+			log.Logger.Infof("Hit rate limit, sleeping for %v", d)
 			time.Sleep(d)
 			if resp == nil {
 				retries += 1
@@ -135,7 +150,7 @@ func GetPaginatedResult[T any, K any](
 			return results, err
 		}
 
-		backoff.Reset()
+		back.Reset()
 		for _, res := range aggregator(raw) {
 			results = append(results, res)
 		}
