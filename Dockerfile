@@ -1,6 +1,4 @@
-# syntax=docker/dockerfile:1
-
-FROM golang:1.19-alpine
+FROM golang:1.19-alpine as build
 
 RUN apk add --no-cache make
 
@@ -15,4 +13,10 @@ ADD . /ghanalyzer/
 
 RUN make all
 
-ENTRYPOINT [ "/ghanalyzer/bin/github-analyzer" ]
+# ----------------------------------------------------------------------------
+
+FROM alpine
+
+COPY --from=build /ghanalyzer/bin/github-analyzer /bin/github-analyzer
+
+ENTRYPOINT [ "/bin/github-analyzer" ]

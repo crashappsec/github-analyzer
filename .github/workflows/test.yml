@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  test-org:
+  analyzer:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,10 +25,10 @@ jobs:
         env:
           GH_SECURITY_AUDITOR_TOKEN: ${{ steps.org-token.outputs.token }}
         run: |
-          docker-compose run --rm co-github-analyzer \
+          docker-compose run --rm github-analyzer \
             --organization ${{ secrets.TEST_GITHUB_ORG }} \
             --userPermissionStats \
-            --noServer
+            --disableServer
 
       - name: "Upload Artifact"
         uses: actions/upload-artifact@v3
@@ -37,6 +37,23 @@ jobs:
           path: output
           retention-days: 7
 
+  asserts:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Generate org-level access token for test-org
+        id: org-token
+        uses: getsentry/action-github-app-token@v1
+        with:
+          app_id: ${{ secrets.TEST_GITHUB_APP_ID }}
+          private_key: ${{ secrets.TEST_GITHUB_APP_PRIVATE_KEY }}
+
       - name: Run tests on output data
+        env:
+          GH_SECURITY_AUDITOR_TOKEN: ${{ steps.org-token.outputs.token }}
+          GH_SECURITY_AUDITOR_ORGANIZATION: ${{ secrets.TEST_GITHUB_ORG }}
         run: |
-          true # TODO
+          docker-compose run --rm tests

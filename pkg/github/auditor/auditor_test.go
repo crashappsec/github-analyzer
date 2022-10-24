@@ -42,12 +42,18 @@ func TestSampleOrg(t *testing.T) {
 		Max:    3 * time.Minute,
 		Jitter: true,
 	}
-	name := "github-security-auditor-test-org"
+
+	name := os.Getenv("GH_SECURITY_AUDITOR_ORGANIZATION")
+	if name == "" {
+		name = "github-security-auditor-test-org"
+	}
+
 	org, err := org.NewOrganization(ctx, auditor.client, back, name)
+
 	assert.Nil(t, err, "Could not create organization")
 	assert.NotNil(t, org.CoreStats, "Could not fetch core stats")
 	assert.Equal(t, name, *org.CoreStats.Login)
-	assert.GreaterOrEqual(t, 1, org.CoreStats.TotalPrivateRepos)
+	assert.GreaterOrEqual(t, 1, *org.CoreStats.TotalPrivateRepos)
 	assert.NotNil(
 		t,
 		org.CoreStats.TwoFactorRequirementEnabled,
