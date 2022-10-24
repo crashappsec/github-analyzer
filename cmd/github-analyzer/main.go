@@ -119,16 +119,18 @@ func runCmd() {
 	futils.SerializeFile(stats, auditStatsPath)
 	futils.SerializeFile(errors, execStatusPath)
 
-	html.Serve(
-		config.ViperEnv.Organization,
-		orgStatsPath,
-		permissionsPath,
-		oauthPath,
-		execStatusPath,
-		issuesPath,
-		futils.HtmlDir,
-		config.ViperEnv.Port,
-	)
+	if !config.ViperEnv.DisableServer {
+		html.Serve(
+			config.ViperEnv.Organization,
+			orgStatsPath,
+			permissionsPath,
+			oauthPath,
+			execStatusPath,
+			issuesPath,
+			futils.HtmlDir,
+			config.ViperEnv.Port,
+		)
+	}
 }
 
 func NewRootCommand() *cobra.Command {
@@ -172,6 +174,9 @@ func NewRootCommand() *cobra.Command {
 		BoolVarP(&config.ViperEnv.Version, "version", "", false, "print version and exit")
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.UserPermissionStats, "userPermissionStats", "", false, "enable user permission statistics (might be slow in large orgs due to throttling limits)")
+
+	rootCmd.Flags().
+		BoolVarP(&config.ViperEnv.DisableServer, "disableServer", "", false, "do not spin up an HTTP server, and only emit data in the designated output folder")
 
 	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "enable experimental checks that rely on screen scraping")

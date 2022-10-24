@@ -113,9 +113,10 @@ You can see available options via the `--help` flag.
   docker compose build --no-cache
   ```
 - Run
+
   ```sh
   docker compose run \
-      --rm \
+      --rm --service-ports \
       co-github-analyzer \
           --organization <your org name> \
           --output output \
