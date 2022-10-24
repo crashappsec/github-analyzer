@@ -21,9 +21,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:generate sh version.sh version.txt
-//go:embed version.txt
-var version string
+var version = "(devel)"
 
 func main() {
 	if err := NewRootCommand().Execute(); err != nil {

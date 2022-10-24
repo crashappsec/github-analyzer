@@ -1,13 +1,18 @@
+BIN=$(notdir $(wildcard cmd/*))
+VERSION=$(shell git describe --tags --long)
+
 .PHONY: all
-all: bin generate ## compile auditor
-	go build -v -o bin/github-analyzer cmd/github-analyzer/main.go
+all: $(addprefix bin/,$(BIN)) ## compile auditor
+
+bin/%: bin generate
+	go build -v -ldflags "-X main.version=$(VERSION)" -o $@ cmd/$*/main.go
 
 bin:
 	mkdir -p bin
 
 .PHONY: generate
-generate:
-	go generate cmd/github-analyzer/main.go
+generate: ## generate go:generate files
+	go generate ./...
 
 .PHONY: lint
 lint: ## lint everything with pre-commit
