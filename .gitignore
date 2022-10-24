@@ -1,3 +1,4 @@
+*.pem
 github-security-auditor.log
 github-analyzer
 index.html

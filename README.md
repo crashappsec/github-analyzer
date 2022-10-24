@@ -103,7 +103,7 @@ You can see available options via the `--help` flag.
   ```sh
   $GOPATH/bin/github-analyzer \
     --organization <your org name> \
-    --token "$GH_SECURITY_AUDITOR_TOKEN" \
+    --token "$GH_SECURITY_AUDITOR_TOKEN"
   ```
 
 ### Running using Docker
@@ -119,7 +119,7 @@ You can see available options via the `--help` flag.
       co-github-analyzer \
           --organization <your org name> \
           --output output \
-          --token "$GH_SECURITY_AUDITOR_TOKEN" \
+          --token "$GH_SECURITY_AUDITOR_TOKEN"
   ```
 
 ## Permissions
