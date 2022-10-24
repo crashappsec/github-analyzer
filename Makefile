@@ -15,7 +15,7 @@ bin:
 	mkdir -p bin
 
 .PHONY: generate
-generate: ## generate go:generate files
+generate: ## process go:generate files
 	go generate ./...
 
 .PHONY: lint
