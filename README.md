@@ -102,13 +102,13 @@ You can see available options via the `--help` flag.
 - Run with:
   ```sh
   $GOPATH/bin/github-analyzer \
-    --organization crashappsec \
+    --organization <your org name> \
     --token "$GH_SECURITY_AUDITOR_TOKEN" \
   ```
 
 ### Running using Docker
 
-- Build the container using:
+- After cloning the repo, build the container using:
   ```sh
   docker compose build --no-cache
   ```
@@ -117,7 +117,7 @@ You can see available options via the `--help` flag.
   docker compose run \
       --rm \
       co-github-analyzer \
-          --organization crashappsec \
+          --organization <your org name> \
           --output output \
           --token "$GH_SECURITY_AUDITOR_TOKEN" \
   ```
@@ -130,7 +130,7 @@ with the appropriate permissions. Example usage:
 
 ```sh
 github-analyzer \
-    --organization crashappsec \
+    --organization <your org name> \
     --token "$GH_SECURITY_AUDITOR_TOKEN"
 ```
 
