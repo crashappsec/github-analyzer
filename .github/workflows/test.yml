@@ -1,0 +1,35 @@
+name: test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test-org:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Generate org-level access token for test-org
+        id: org-token
+        uses: getsentry/action-github-app-token@v1
+        with:
+          app_id: ${{ secrets.TEST_GITHUB_APP_ID }}
+          private_key: ${{ secrets.TEST_GITHUB_APP_PRIVATE_KEY }}
+
+      - name: Scan test-org
+        env:
+          GH_SECURITY_AUDITOR_TOKEN: ${{ steps.org-token.outputs.token }}
+        run: |
+          docker-compose run --rm co-github-analyzer \
+            --organization ${{ secrets.TEST_GITHUB_ORG }} \
+            --userPermissionStats \
+            --noServer
+
+      - name: Run tests on output data
+        run: |
+          true # TODO

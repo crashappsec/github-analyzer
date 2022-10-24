@@ -9,7 +9,6 @@ const (
 type ViperEnvVars struct {
 	CfgFile             string `mapstructure:"CFG_FILE"`
 	EnableScraping      bool   `mapstructure:"ENABLE_SCRAPING"`
-	DisableServer       bool   `mapstructure:"DISABLE_SERVER"`
 	UserPermissionStats bool   `mapstructure:"USER_PERMISSION_STATS"`
 	Version             bool   `mapstructure:"VERSION"`
 	Organization        string `mapstructure:"ORGANIZATION"`
@@ -17,6 +16,7 @@ type ViperEnvVars struct {
 	OutputDir           string `mapstructure:"OUTPUT_DIR"`
 	Password            string `mapstructure:"PASSWORD"`
 	Port                int    `mapstructure:"PORT"`
+	DisableServer       bool   `mapstructure:"DISABLE_SERVER"`
 	ScmURL              string `mapstructure:"SCM_URL"`
 	Token               string `mapstructure:"TOKEN"`
 	Username            string `mapstructure:"USERNAME"`
