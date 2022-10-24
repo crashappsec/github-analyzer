@@ -30,6 +30,13 @@ jobs:
             --userPermissionStats \
             --noServer
 
+      - name: "Upload Artifact"
+        uses: actions/upload-artifact@v3
+        with:
+          name: output
+          path: output
+          retention-days: 7
+
       - name: Run tests on output data
         run: |
           true # TODO
