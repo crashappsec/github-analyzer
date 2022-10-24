@@ -1,2 +1,4 @@
 #!/bin/sh
-git describe --tags --long > version.txt
+
+destination=${1:-version.txt}
+git describe --tags --long | tee $destination

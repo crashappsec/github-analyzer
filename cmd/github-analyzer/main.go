@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:generate sh version.sh
+//go:generate sh version.sh version.txt
 //go:embed version.txt
 var version string
 

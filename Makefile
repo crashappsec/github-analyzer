@@ -1,8 +1,13 @@
 .PHONY: all
-all: ## compile auditor
-	mkdir -p bin
-	go generate
+all: bin generate ## compile auditor
 	go build -v -o bin/github-analyzer cmd/github-analyzer/main.go
+
+bin:
+	mkdir -p bin
+
+.PHONY: generate
+generate:
+	go generate cmd/github-analyzer/main.go
 
 .PHONY: lint
 lint: ## lint everything with pre-commit
@@ -22,11 +27,11 @@ fmt: ## go format
 	gofmt -w ./$*
 
 .PHONY: vet
-vet: ## go vet
+vet: generate ## go vet
 	go vet ./...
 
 .PHONY: test
-test: ## run go tests (requires GitHub to be reachable via the network)
+test: generate ## run go tests (requires GitHub to be reachable via the network)
 	go test -v -race -coverprofile coverage.txt ./...
 
 .PHONY: help

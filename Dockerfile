@@ -1,6 +1,6 @@
 FROM golang:1.19-alpine as build
 
-RUN apk add --no-cache make
+RUN apk add --no-cache git make
 
 WORKDIR /ghanalyzer
 
