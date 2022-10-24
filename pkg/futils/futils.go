@@ -14,6 +14,8 @@ import (
 var IssuesDir, StatsDir, MetadataDir, HtmlDir string
 
 func Init() {
+
+	log.Logger.Debugf("Output dir is %s", config.ViperEnv.OutputDir)
 	IssuesDir = filepath.Join(config.ViperEnv.OutputDir, "issues")
 	StatsDir = filepath.Join(config.ViperEnv.OutputDir, "stats")
 	MetadataDir = filepath.Join(config.ViperEnv.OutputDir, "metadata")

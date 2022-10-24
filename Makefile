@@ -25,6 +25,10 @@ fmt: ## go format
 vet: ## go vet
 	go vet ./...
 
+.PHONY: test
+test: ## run go tests (requires GitHub to be reachable via the network)
+	go test -v -race -coverprofile coverage.txt ./...
+
 .PHONY: help
 help: ## show help
 	@grep -E '^[a-zA-Z_\-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
