@@ -5,7 +5,11 @@ VERSION=$(shell git describe --tags --long)
 all: $(addprefix bin/,$(BIN)) ## compile auditor
 
 bin/%: bin generate
-	go build -v -ldflags "-X main.version=$(VERSION)" -o $@ cmd/$*/main.go
+	go build \
+		-v \
+		-ldflags "-X main.version=$(VERSION)" \
+		-o $@ \
+		cmd/$*/main.go
 
 bin:
 	mkdir -p bin

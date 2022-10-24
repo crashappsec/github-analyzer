@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	_ "embed"
@@ -22,6 +23,21 @@ import (
 )
 
 var version = "(devel)"
+
+func getVersion() (response string) {
+	// inspired from
+	// https://github.com/mvdan/sh/blob/6ba49e2c622e3f56330f4de6238a390f395db2d8/cmd/shfmt/main.go#L181-L192
+	if info, ok := debug.ReadBuildInfo(); ok && version == "(devel)" {
+		mod := &info.Main
+		if mod.Replace != nil {
+			mod = mod.Replace
+		}
+		if mod.Version != "" {
+			version = mod.Version
+		}
+	}
+	return version
+}
 
 func main() {
 	if err := NewRootCommand().Execute(); err != nil {
@@ -135,7 +151,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use: fmt.Sprintf(
 			"github-analyzer (%s)",
-			strings.TrimSuffix(version, "\n"),
+			strings.TrimSuffix(getVersion(), "\n"),
 		),
 		Short: "A tool to collect statistics and highlight potential security issues within a GitHub org",
 		Long:  "A tool to collect statistics and highlight potential security issues within a GitHub org",
@@ -146,7 +162,7 @@ func NewRootCommand() *cobra.Command {
 		PreRun: func(cmd *cobra.Command, args []string) {
 			onlyPrintVersion, _ := cmd.Flags().GetBool("version")
 			if onlyPrintVersion {
-				fmt.Println(version)
+				fmt.Println(getVersion())
 				os.Exit(0)
 			}
 			cmd.MarkFlagRequired("organization")
