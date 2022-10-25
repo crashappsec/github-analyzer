@@ -1,8 +1,22 @@
+BIN=$(notdir $(wildcard cmd/*))
+VERSION=$(shell git describe --tags --long)
+
 .PHONY: all
-all: ## compile auditor
+all: $(addprefix bin/,$(BIN)) ## compile auditor
+
+bin/%: bin generate
+	go build \
+		-v \
+		-ldflags "-X main.version=$(VERSION)" \
+		-o $@ \
+		cmd/$*/main.go
+
+bin:
 	mkdir -p bin
-	go generate
-	go build -v -o bin/github-analyzer cmd/github-analyzer/main.go
+
+.PHONY: generate
+generate: ## process go:generate files
+	go generate ./...
 
 .PHONY: lint
 lint: ## lint everything with pre-commit
@@ -22,11 +36,11 @@ fmt: ## go format
 	gofmt -w ./$*
 
 .PHONY: vet
-vet: ## go vet
+vet: generate ## go vet
 	go vet ./...
 
 .PHONY: test
-test: ## run go tests (requires GitHub to be reachable via the network)
+test: generate ## run go tests (requires GitHub to be reachable via the network)
 	go test -v -race -coverprofile coverage.txt ./...
 
 .PHONY: help

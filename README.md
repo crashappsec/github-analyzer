@@ -117,7 +117,7 @@ You can see available options via the `--help` flag.
   ```sh
   docker compose run \
       --rm --service-ports \
-      co-github-analyzer \
+      github-analyzer \
           --organization <your org name> \
           --output output \
           --token "$GH_SECURITY_AUDITOR_TOKEN"

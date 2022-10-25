@@ -1,14 +1,22 @@
-# syntax=docker/dockerfile:1
+FROM golang:1.19-alpine as build
 
-FROM golang:1.19-alpine
+RUN apk add --no-cache git make
 
 WORKDIR /ghanalyzer
 
-ADD . /ghanalyzer
+ADD go.* /ghanalyzer/
 
 RUN go mod download
 RUN go env -w GO111MODULE=on
 
-RUN mkdir -p bin && go generate && go build -v -o bin/github-analyzer cmd/github-analyzer/main.go
+ADD . /ghanalyzer/
 
-ENTRYPOINT [ "/ghanalyzer/bin/github-analyzer" ]
+RUN make all
+
+# ----------------------------------------------------------------------------
+
+FROM alpine
+
+COPY --from=build /ghanalyzer/bin/github-analyzer /bin/github-analyzer
+
+ENTRYPOINT [ "/bin/github-analyzer" ]

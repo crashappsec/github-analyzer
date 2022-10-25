@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	_ "embed"
@@ -21,9 +22,22 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:generate sh version.sh
-//go:embed version.txt
-var version string
+var version = "(devel)"
+
+func getVersion() (response string) {
+	// inspired from
+	// https://github.com/mvdan/sh/blob/6ba49e2c622e3f56330f4de6238a390f395db2d8/cmd/shfmt/main.go#L181-L192
+	if info, ok := debug.ReadBuildInfo(); ok && version == "(devel)" {
+		mod := &info.Main
+		if mod.Replace != nil {
+			mod = mod.Replace
+		}
+		if mod.Version != "" {
+			version = mod.Version
+		}
+	}
+	return version
+}
 
 func main() {
 	if err := NewRootCommand().Execute(); err != nil {
@@ -137,7 +151,7 @@ func NewRootCommand() *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use: fmt.Sprintf(
 			"github-analyzer (%s)",
-			strings.TrimSuffix(version, "\n"),
+			strings.TrimSuffix(getVersion(), "\n"),
 		),
 		Short: "A tool to collect statistics and highlight potential security issues within a GitHub org",
 		Long:  "A tool to collect statistics and highlight potential security issues within a GitHub org",
@@ -148,7 +162,7 @@ func NewRootCommand() *cobra.Command {
 		PreRun: func(cmd *cobra.Command, args []string) {
 			onlyPrintVersion, _ := cmd.Flags().GetBool("version")
 			if onlyPrintVersion {
-				fmt.Println(version)
+				fmt.Println(getVersion())
 				os.Exit(0)
 			}
 			cmd.MarkFlagRequired("organization")
@@ -176,9 +190,6 @@ func NewRootCommand() *cobra.Command {
 		BoolVarP(&config.ViperEnv.UserPermissionStats, "userPermissionStats", "", false, "enable user permission statistics (might be slow in large orgs due to throttling limits)")
 
 	rootCmd.Flags().
-		BoolVarP(&config.ViperEnv.DisableServer, "disableServer", "", false, "do not spin up an HTTP server, and only emit data in the designated output folder")
-
-	rootCmd.Flags().
 		BoolVarP(&config.ViperEnv.EnableScraping, "enableScraping", "", false, "enable experimental checks that rely on screen scraping")
 	rootCmd.Flags().
 		StringVarP(&config.ViperEnv.Username, "username", "u", "", fmt.Sprintf("username (required if enableScraping is set) (default is $%s_USERNAME)", config.ViperEnvPrefix))
@@ -189,6 +200,8 @@ func NewRootCommand() *cobra.Command {
 
 	rootCmd.Flags().
 		IntVarP(&config.ViperEnv.Port, "port", "", 3000, "port for local http server used to display HTML with summary of findings (if you are using docker you will need to override the default port appropriately)")
+	rootCmd.Flags().
+		BoolVarP(&config.ViperEnv.DisableServer, "disableServer", "", false, "do not spin up an HTTP server, and only emit data in the designated output folder")
 	return rootCmd
 }
 

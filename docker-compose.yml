@@ -1,16 +1,26 @@
 version: "3.8"
 
 services:
-  co-github-analyzer:
-    # image allows to cache all deps hence to speed up CI
-    # CI image: ghcr.io/crashappsec/github-analyzer:latest
-    build: . # CI
-    container_name: github-analyzer
-    working_dir: $PWD
+  github-analyzer:
+    build: .
     ports:
       - 3000:3000
+    working_dir: $PWD
     volumes:
-      - $PWD:$PWD
+      - $PWD:$PWD # this allows to share ./output/
+    environment:
+      GH_SECURITY_AUDITOR_TOKEN: ${GH_SECURITY_AUDITOR_TOKEN:-}
+      GH_SECURITY_AUDITOR_USERNAME: ${GH_SECURITY_AUDITOR_USERNAME:-}
+      GH_SECURITY_AUDITOR_PASSWORD: ${GH_SECURITY_AUDITOR_PASSWORD:-}
+      GH_SECURITY_AUDITOR_OTP_SEED: ${GH_SECURITY_AUDITOR_OTP_SEED:-}
+
+  tests:
+    image: golang:1.19
+    command: make test
+    init: true
+    working_dir: $PWD
+    volumes:
+      - $PWD:$PWD # this allows to share ./output/
     environment:
       GH_SECURITY_AUDITOR_TOKEN: ${GH_SECURITY_AUDITOR_TOKEN:-}
       GH_SECURITY_AUDITOR_USERNAME: ${GH_SECURITY_AUDITOR_USERNAME:-}
