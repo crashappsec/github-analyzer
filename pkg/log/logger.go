@@ -17,7 +17,7 @@ func initLogger(enableStackTrace bool) *zap.SugaredLogger {
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	stdoutEncoder := zapcore.NewConsoleEncoder(config)
 
-	// FIXME read from env vasriable
+	// FIXME read from env variable
 	logFile, err := os.OpenFile(
 		"github-analyzer.log",
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY,
