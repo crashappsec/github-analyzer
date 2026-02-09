@@ -161,3 +161,44 @@ for instructions on setting up a token to be used with the analyzer.
 Project was originally ported from Mike de Libero's
 [auditor](https://github.com/CodeReconCo/githubsecurityauditor)
 with the author's permission.
+
+## Using GitHub App Instead of Personal Access Token
+
+For better security, it is recommended to use a GitHub App access token instead of a personal access token when running this tool internally within an organization.
+
+### Steps to generate access token using GitHub App
+
+1. Go to GitHub Developer Settings:
+   https://github.com/settings/apps
+
+2. Click **New GitHub App**
+
+3. Fill required details:
+   - App name
+   - Homepage URL (can be your org URL)
+   - Disable webhook (not required)
+
+4. Set permissions:
+   Repository permissions:
+   - Metadata: Read
+   - Contents: Read
+   - Administration: Read
+
+   Organization permissions:
+   - Members: Read
+   - Administration: Read
+
+5. Click **Create GitHub App**
+
+6. Generate a private key (.pem file)
+
+7. Install the GitHub App to your organization
+
+8. Generate a JWT token using the App ID and private key.
+
+9. Exchange JWT for installation access token using GitHub API:
+   https://api.github.com/app/installations/{installation_id}/access_tokens
+
+10. Use this access token when running github-analyzer internally.
+
+This approach avoids using personal access tokens and improves organizational security.
